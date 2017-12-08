@@ -91,7 +91,6 @@ def trending_search(config_dict, data):
     Trending Search
     - fetch data from datastore(solr) for trending search keywords
     """
-    print "----> in trending"
     #parse query dict
     lang = data.get('language', '*')
     platform = data.get('platform', 'web')
@@ -108,7 +107,6 @@ def trending_search(config_dict, data):
                       'fl':'keyword',
                       'q':'lang:{} AND activity_date:[NOW-1DAY TO NOW]'.format(lang)}
         url = "{}/{}".format(config_dict['solr_url'], "search_activity/select")
-        print "----> in trending, get data"
 
         print log_formatter(inspect.stack()[0][3], "solr url %s" % url)
 
@@ -120,7 +118,6 @@ def trending_search(config_dict, data):
             for row in data['grouped']['keyword']['groups']:
                 trending_keywords[row['groupValue']] = row['doclist']['numFound']
 
-        print "----> in trending, prepared data"
 
         for sw in stopword.STOP_WORDS:
             for ky in trending_keywords.keys():
@@ -133,7 +130,6 @@ def trending_search(config_dict, data):
                 if k1 in k2:
                     del(trending_keywords[ky])
 
-        print "----> in trending, now sorting"
         temp = sorted(trending_keywords, key=trending_keywords.get, reverse=True)
         if len(temp) == 0:
             return [200, "Success"]
@@ -154,7 +150,7 @@ def author_data(config_dict, pdict):
         lang_filter = '{}'.format(pdict['lang']) if pdict['lang'] is not None else '*'
         param_dict = {'wt':'json',
                       'fl':'author_id',
-                      'sort':'score desc, read_count desc',
+                      'sort':'score desc',
                       'rows':pdict['author_limit'],
                       'start':pdict['author_offset'],
                       'q':'*{}* AND state:{} AND lang:{}'.format(pdict['text'], state_filter, lang_filter)}
@@ -166,8 +162,6 @@ def author_data(config_dict, pdict):
         author = []
         author_count = 0
         response = requests.get(url, params=param_dict)
-        print "************ url ", url
-        print "*********** param ", param_dict
 
         if response.status_code == 200:
             data = json.loads(response.text)
@@ -180,17 +174,11 @@ def author_data(config_dict, pdict):
         if author_count > 0 and pdict['author_offset'] < author_count:
             response['authors_found'] = author_count
             url = "{}".format(config_dict['author_url'])
-            #param_dict = {'id':','.join([str(x) for x in author]), 'userId':pdict['userid']}
             param_dict = {'id':','.join([str(x) for x in author])}
             print log_formatter(inspect.stack()[0][3], "called author service")
             print log_formatter(inspect.stack()[0][3], param_dict)
             
-            print "******>> author service url ", url
-            print "******>> author service param ", param_dict
-            print "******>> author service header ", {"User-Id":str(pdict['userid'])}
-
             service_response = requests.get(url, params=param_dict, headers={"User-Id":str(pdict['userid'])})
-            print "******>> author service response ", service_response.text
 
             print log_formatter(inspect.stack()[0][3], "done author service")
             if service_response.status_code == 200:
@@ -225,7 +213,7 @@ def pratilipi_data(config_dict, pdict, author_found_list):
         lang_filter = '{}'.format(pdict['lang']) if pdict['lang'] is not None else '*'
         param_dict = {'wt':'json', 
                       'fl':'pratilipi_id', 
-                      'sort':'score desc, read_count desc', 
+                      'sort':'score desc', 
                       'rows':pdict['pratilipi_limit'],
                       'start':pdict['pratilipi_offset'],
                       'q':'*{}* AND state:{} AND lang:{}'.format(pdict['text'], state_filter, lang_filter)}
@@ -248,7 +236,7 @@ def pratilipi_data(config_dict, pdict, author_found_list):
             #get pratilipi's for found author's
             param_dict = {'wt':'json',
                           'fl':'pratilipi_id',
-                          'sort':'score desc, read_count desc',
+                          'sort':'score desc',
                           'rows':pdict['pratilipi_limit'],
                           'start':pdict['pratilipi_offset'],
                           'q':'author_id:({}) AND state:{} AND lang:{}'.format(' '.join(str(x) for x in author_found_list), state_filter, lang_filter)}
