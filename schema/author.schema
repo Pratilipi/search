@@ -1026,20 +1026,13 @@
      </similarity>
     -->
 
+    <field name="author_id" type="long" indexed="true" stored="true" required="true" multiValued="false"/>
     <field name="lang" type="string" indexed="true" stored="false" multiValued="false" />
-    <field name="gender" type="string" indexed="true" stored="false" multiValued="false" />
+    <field name="first_name" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="last_name" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="first_name_en" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="last_name_en" type="string" indexed="true" stored="true" multiValued="false" />
     <field name="pen_name_en" type="string" indexed="true" stored="true" multiValued="false" />
     <field name="pen_name" type="string" indexed="true" stored="true" multiValued="false" />
-    <field name="name" type="string" indexed="true" stored="true" multiValued="false" />
-    <field name="name_en" type="string" indexed="true" stored="true" multiValued="false" />
     <field name="summary" type="text_general" indexed="true" stored="false" multiValued="false"/>
-    <field name="author_id" type="long" indexed="true" stored="true" required="true" multiValued="false"/>
-    <field name="user_id" type="long" indexed="true" stored="true" required="true" multiValued="false"/>
-    <field name="read_count" type="long" indexed="false" stored="false" multiValued="false"/>
-    <field name="follow_count" type="long" indexed="false" stored="false" multiValued="false"/>
-    <field name="content_published" type="long" indexed="false" stored="false" multiValued="false"/>
-    <field name="profile_image" type="string" indexed="true" stored="true" multiValued="false"/>
-    <field name="cover_image" type="string" indexed="true" stored="true" multiValued="false"/>
-    <field name="reg_date" type="tdate" indexed="true" stored="false" multiValued="false"/>
-    <field name="state" type="string" indexed="true" stored="true" multiValued="false" />
 </schema>
