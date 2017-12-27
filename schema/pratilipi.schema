@@ -1027,7 +1027,7 @@
     -->
 
     <field name="pratilipi_id" type="long" indexed="true" stored="true" required="true" multiValued="false" />
-    <field name="lang" type="string" indexed="true" stored="false" multiValued="false" />
+    <field name="language" type="string" indexed="true" stored="false" multiValued="false" />
     <field name="author_id" type="long" indexed="true" stored="true" required="true" multiValued="false" />
     <field name="title" type="string" indexed="true" stored="true" multiValued="false" />
     <field name="title_en" type="string" indexed="true" stored="true" multiValued="false" />
