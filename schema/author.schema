@@ -1027,7 +1027,7 @@
     -->
 
     <field name="author_id" type="long" indexed="true" stored="true" required="true" multiValued="false"/>
-    <field name="lang" type="string" indexed="true" stored="false" multiValued="false" />
+    <field name="language" type="string" indexed="true" stored="false" multiValued="false" />
     <field name="first_name" type="string" indexed="true" stored="true" multiValued="false" />
     <field name="last_name" type="string" indexed="true" stored="true" multiValued="false" />
     <field name="first_name_en" type="string" indexed="true" stored="true" multiValued="false" />
