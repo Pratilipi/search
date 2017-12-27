@@ -52,7 +52,7 @@ def register_request(config_dict, param_dict):
         data = {"activity_date": datetime.now().strftime("%Y-%m-%d"),
                 "activity_hour": datetime.now().strftime("%H"),
                 "platform": param_dict['platform'],
-                "lang": param_dict['lang'],
+                "language": param_dict['language'],
                 "userid": param_dict['userid'],
                 "keyword": param_dict['text']}
         register_search_activity(config_dict['solr_url'],data)
@@ -63,7 +63,7 @@ def register_request(config_dict, param_dict):
     try:
         #TODO why connect all time, pool can be added ?
         r = redis.StrictRedis(config_dict['redis_url'], config_dict['redis_port'], config_dict['redis_db'])
-        rvalue = "{}|{}|{}|{}".format(datetime.now().strftime("%Y-%m-%d"), param_dict['platform'], param_dict['lang'], param_dict['text'])
+        rvalue = "{}|{}|{}|{}".format(datetime.now().strftime("%Y-%m-%d"), param_dict['platform'], param_dict['language'], param_dict['text'])
       
         cntr = 1
         if r.hexists("daily_search_activity", rvalue): 
@@ -73,7 +73,7 @@ def register_request(config_dict, param_dict):
         r.hmset("daily_search_activity", {rvalue:cntr})
         rvalue = "{}|{}|{}|{}|{}|{}|{}".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
                                           param_dict['platform'],
-                                          param_dict['lang'],
+                                          param_dict['language'],
                                           param_dict['userid'],
                                           str(param_dict['author_found']),
                                           str(param_dict['pratilipi_found']),
@@ -92,7 +92,7 @@ def trending_search(config_dict, data):
     - fetch data from datastore(solr) for trending search keywords
     """
     #parse query dict
-    lang = data.get('language', '*')
+    language = data.get('languageuage', '*')
     platform = data.get('platform', 'web')
     limit = config_dict['trending_limit']
     age = config_dict['trending_age']
@@ -105,7 +105,7 @@ def trending_search(config_dict, data):
                       'group.field':'keyword',
                       'rows':100000,
                       'fl':'keyword',
-                      'q':'lang:{} AND activity_date:[NOW-1DAY TO NOW]'.format(lang)}
+                      'q':'language:{} AND activity_date:[NOW-1DAY TO NOW]'.format(language)}
         url = "{}/{}".format(config_dict['solr_url'], "search_activity/select")
 
         print log_formatter(inspect.stack()[0][3], "solr url %s" % url)
@@ -146,17 +146,17 @@ def author_data(config_dict, pdict):
     try:
         #fetch authors
         #prepare url for solr
-        state_filter = "ACTIVE" if pdict['is_active'] else "*"
-        lang_filter = '{}'.format(pdict['lang']) if pdict['lang'] is not None else '*'
+        language_filter = '{}'.format(pdict['language']) if pdict['language'] is not None else '*'
         param_dict = {'wt':'json',
                       'fl':'author_id',
                       'sort':'score desc',
                       'rows':pdict['author_limit'],
                       'start':pdict['author_offset'],
-                      'q':'*{}* AND state:{} AND lang:{}'.format(pdict['text'], state_filter, lang_filter)}
+                      'q':'*{}* AND language:{}'.format(pdict['text'], language_filter)}
         url = "{}/{}".format(config_dict['solr_url'], "author/select")
 
         print log_formatter(inspect.stack()[0][3], "solr url %s" % url)
+        print param_dict
 
         #prepare author dict
         author = []
@@ -165,9 +165,14 @@ def author_data(config_dict, pdict):
 
         if response.status_code == 200:
             data = json.loads(response.text)
+            print "===========>>>> ", data
             author_count = data['response']['numFound']
             for row in data['response']['docs']:
                 author.append(row['author_id'])
+
+        print "-------------> author"
+        print author
+        print "-------------> author"
 
         #generate author response
         response = {}
@@ -209,17 +214,17 @@ def pratilipi_data(config_dict, pdict, author_found_list):
     try:
         #fetch pratilipis
         #prepare url for solr
-        state_filter = "PUBLISHED" if pdict['is_active'] else "*"
-        lang_filter = '{}'.format(pdict['lang']) if pdict['lang'] is not None else '*'
+        language_filter = '{}'.format(pdict['language']) if pdict['language'] is not None else '*'
         param_dict = {'wt':'json', 
                       'fl':'pratilipi_id', 
                       'sort':'score desc', 
                       'rows':pdict['pratilipi_limit'],
                       'start':pdict['pratilipi_offset'],
-                      'q':'*{}* AND state:{} AND lang:{}'.format(pdict['text'], state_filter, lang_filter)}
+                      'q':'*{}* AND language:{}'.format(pdict['text'], language_filter)}
         url = "{}/{}".format(config_dict['solr_url'], "pratilipi/select")
 
         print log_formatter(inspect.stack()[0][3], "solr url %s" % url)
+        print param_dict
 
         #prepare pratilipi dict
         pratilipi = []
@@ -231,6 +236,9 @@ def pratilipi_data(config_dict, pdict, author_found_list):
             for row in data['response']['docs']:
                 pratilipi.append(row['pratilipi_id'])
 
+        print "-------------> pratilipi"
+        print pratilipi
+        print "-------------> pratilipi"
         #optimise result
         if pratilipi_count == 0 and len(author_found_list) > 0:
             #get pratilipi's for found author's
@@ -239,7 +247,7 @@ def pratilipi_data(config_dict, pdict, author_found_list):
                           'sort':'score desc',
                           'rows':pdict['pratilipi_limit'],
                           'start':pdict['pratilipi_offset'],
-                          'q':'author_id:({}) AND state:{} AND lang:{}'.format(' '.join(str(x) for x in author_found_list), state_filter, lang_filter)}
+                          'q':'author_id:({}) AND language:{}'.format(' '.join(str(x) for x in author_found_list), language_filter)}
             url = "{}/{}".format(config_dict['solr_url'], "pratilipi/select")
             print log_formatter(inspect.stack()[0][3], "solr url %s" % url)
 
@@ -247,6 +255,7 @@ def pratilipi_data(config_dict, pdict, author_found_list):
             response = requests.get(url, params=param_dict)
             if response.status_code == 200:
                 data = json.loads(response.text)
+                print "===========>>>> ", data
                 pratilipi_count = data['response']['numFound']
                 for row in data['response']['docs']:
                     pratilipi.append(row['pratilipi_id'])
@@ -284,7 +293,7 @@ def search(config_dict, data, user_id):
     param_dict = {}
     param_dict['userid'] = user_id
     param_dict['text'] = data.get('text', None)
-    param_dict['lang'] = data.get('language', None)
+    param_dict['language'] = data.get('languageuage', None)
     param_dict['platform'] = data.get('platform', 'web')
     param_dict['is_active'] = data.get('is_active', True)
     param_dict['author_limit'] = int(data.get('authorResultCount', 10))
@@ -321,7 +330,7 @@ def search(config_dict, data, user_id):
         return [204, "No Content"]
 
     #register request for analysis
-    param_dict = {"lang": param_dict['lang'],
+    param_dict = {"language": param_dict['language'],
                   "userid": param_dict['userid'],
                   "platform": param_dict['platform'],
                   "text": param_dict['text'],
