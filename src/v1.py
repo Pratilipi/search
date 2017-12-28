@@ -170,10 +170,6 @@ def author_data(config_dict, pdict):
             for row in data['response']['docs']:
                 author.append(row['author_id'])
 
-        print "-------------> author"
-        print author
-        print "-------------> author"
-
         #generate author response
         response = {}
         if author_count > 0 and pdict['author_offset'] < author_count:
@@ -236,9 +232,6 @@ def pratilipi_data(config_dict, pdict, author_found_list):
             for row in data['response']['docs']:
                 pratilipi.append(row['pratilipi_id'])
 
-        print "-------------> pratilipi"
-        print pratilipi
-        print "-------------> pratilipi"
         #optimise result
         if pratilipi_count == 0 and len(author_found_list) > 0:
             #get pratilipi's for found author's
