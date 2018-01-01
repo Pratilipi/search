@@ -3,7 +3,7 @@ import ujson
 import time
 import boto3
 import solr
-import copy
+import config
 
 # setting encoding for app
 import sys
@@ -11,10 +11,9 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 # config
-SOLR_URL = "http://localhost:8983/solr"
-STAGE = "local" if "STAGE" not in os.environ else os.environ["STAGE"]
-QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/{}/{}-search".format(os.environ["AWS_PROJ_ID"], 'devo' if STAGE == 'local' else STAGE)
-POLL_SLEEP_TIME = 10
+SOLR_URL = config.SOLR_URL
+QUEUE_URL = config.QUEUE_URL
+POLL_SLEEP_TIME = config.POLL_SLEEP_TIME
 
 class Event:
     def __init__(self):
@@ -34,6 +33,9 @@ class Author:
             value = kwargs[name]
             setattr(self, attribute, value)
 
+    def __del__(self):
+        self._conn.close()
+
     def transformer(self, key):
         key = key.lower().strip()
         attribute = {}
@@ -50,10 +52,10 @@ class Author:
         
     def add(self):
         """add doc"""
-        doc = copy.copy(self.__dict__)
-        self._conn.add(author_id=doc['author_id'], language=doc['language'], first_name=doc['first_name'], 
-                       last_name=doc.get('last_name', None), pen_name=doc.get('pen_name', None), 
-                       first_name_en=doc.get('first_name_en', None), last_name_en=doc.get('last_name_en'), 
+        doc = self.__dict__
+        self._conn.add(author_id=doc['author_id'], language=doc.get('language'), first_name=doc.get('first_name',None),
+                       last_name=doc.get('last_name', None), pen_name=doc.get('pen_name', None),
+                       first_name_en=doc.get('first_name_en', None), last_name_en=doc.get('last_name_en'),
                        pen_name_en=doc.get('pen_name_en', None), summary=doc.get('summary', None))
         self._conn.commit()
         print "author added ", doc
@@ -80,11 +82,9 @@ class Author:
             self.add()
             return
 
-        new_doc = copy.copy(self.__dict__)
-
-        for key in new_doc:
-            old_doc[key] = new_doc[key]
-        
+        new_doc = self.__dict__
+        for key in new_doc: old_doc[key] = new_doc[key]
+        for key in old_doc: setattr(self, key, old_doc[key])
         self.delete()
         self.add()
         print "author updated ", old_doc
@@ -99,7 +99,10 @@ class Pratilipi:
             value = kwargs[name]
             setattr(self, attribute, value)
 
-    def transformer(key):
+    def __del__(self):
+        self._conn.close()
+
+    def transformer(self, key):
         key = key.lower().strip()
         attribute = {}
         attribute['pratilipiid'] = 'pratilipi_id'
@@ -115,18 +118,43 @@ class Pratilipi:
 
     def add(self):
         """add doc"""
-        doc = copy.copy(self.__dict__)
-        self._conn.add(doc, commit=True)
+        print "in pratilipi add"
+        doc = self.__dict__
+        self._conn.add(pratilipi_id=doc['pratilipi_id'], language=doc.get('language', None), author_id=doc.get('author_id',None),
+                       title=doc.get('title', None), title_en=doc.get('title_en', None),
+                       summary=doc.get('summary', None), content_type=doc.get('content_type'),
+                       category=doc.get('category', None), category_en=doc.get('category_en', None))
+        self._conn.commit()
         print "pratilipi added ", doc
 
     def delete(self):
         """delete doc"""
-        self._conn.delete(pratilipi_id=self.pratilipi_id, commit=True)
+        self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
+        self._conn.commit()
         print "pratilipi deleted ", self.pratilipi_id
+
+    def get(self):
+        """get doc"""
+        dataset = self._conn.query("pratilipi_id:{}".format(self.pratilipi_id))
+        data = None
+        for row in dataset:
+            data = row
+        return data
 
     def update(self):
         """update doc"""
+        old_doc = self.get()
+
+        if old_doc is None:
+            self.add()
+            return
+
+        new_doc = self.__dict__
+        for key in new_doc: old_doc[key] = new_doc[key]
+        for key in old_doc: setattr(self, key, old_doc[key])
+        self.delete()
         self.add()
+        print "pratilipi updated ", old_doc
 
 class SearchQueue:
     def __init__(self):
@@ -160,7 +188,7 @@ class SearchQueue:
         eval("{}.{}()".format("author", action.lower()))
 
     def process_pratilipi(self, action, pratilipi_id, kwargs):
-        kwargs['pratilipi_id'] = pratilipi_id
+        kwargs['pratilipiId'] = pratilipi_id
         pratilipi = Pratilipi(kwargs)
         print "encountered pratilipi ", action, kwargs
         eval("{}.{}()".format("pratilipi", action.lower()))
@@ -170,6 +198,7 @@ class SearchQueue:
         print "processing event"
         events = self.events
         for event in events:
+            print event.__dict__
             resource, action = event.type.upper().split('.')
 
             if event.version != "2.0": continue
@@ -179,7 +208,7 @@ class SearchQueue:
             if resource == "AUTHOR":
                 self.process_author(action, event.resource_id, event.message)
             elif resource == "PRATILIPI":
-                self.process_pratilipi(action, event.resource, event.message)
+                self.process_pratilipi(action, event.resource_id, event.message)
             self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
 
 print "worker started listening for events...."
