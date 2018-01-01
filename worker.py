@@ -3,7 +3,7 @@ import ujson
 import time
 import boto3
 import solr
-import config
+from config import config
 
 # setting encoding for app
 import sys
