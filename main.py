@@ -12,18 +12,14 @@ import inspect
 import simplejson as json
 import bottle
 import time
+
 from datetime import datetime
+from src import v1
+from config import config
 from bottle import Bottle, route, run, request, response
+from lib.commonfns import api_response, log_formatter, requested_api_version
+
 application = Bottle()
-
-# set the base path
-sys.path.append("%s/src" % os.getcwd())
-sys.path.append("%s/lib" % os.getcwd())
-sys.path.append("%s/config" % os.getcwd())
-
-import v1
-from commonfns import api_response, log_formatter, requested_api_version
-import config
 
 print log_formatter(inspect.stack()[0][3], os.environ)
 
@@ -121,5 +117,4 @@ def trending_search():
 if __name__ == '__main__':
     print log_formatter(inspect.stack()[0][3], "start running search app")
     run(application, host='127.0.0.1', port=8080)
-
 

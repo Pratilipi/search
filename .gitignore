@@ -6,3 +6,7 @@ venv/*
 */migrations/*
 */venv/*
 *.sock
+env
+.env
+env/
+env/*
