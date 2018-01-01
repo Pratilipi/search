@@ -1,11 +1,12 @@
-from commonfns import log_formatter
-from datetime import datetime
 import requests
 import inspect
-import simplejson as json
 import redis
 import threading
-import stopword
+from config import stopword
+import simplejson as json
+
+from lib.commonfns import log_formatter
+from datetime import datetime
 
 
 def _encode_data(data_str):
