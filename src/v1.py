@@ -109,7 +109,8 @@ def trending_search(config_dict, data):
                       'q':'language:{} AND activity_date:[NOW-1DAY TO NOW]'.format(language)}
         url = "{}/{}".format(config_dict['solr_url'], "search_activity/select")
 
-        print log_formatter(inspect.stack()[0][3], "solr url %s" % url)
+        print log_formatter(inspect.stack()[0][3], "trending search solr url %s" % url)
+        print log_formatter(inspect.stack()[0][3], "trending search solr param %s" % param_dict)
 
         #generate response
         trending_keywords = {}
@@ -118,7 +119,8 @@ def trending_search(config_dict, data):
             data = json.loads(response.text)
             for row in data['grouped']['keyword']['groups']:
                 trending_keywords[row['groupValue']] = row['doclist']['numFound']
-
+        else:
+            print "failed for trending search - {}".format(response.text)
 
         for sw in stopword.STOP_WORDS:
             for ky in trending_keywords.keys():
