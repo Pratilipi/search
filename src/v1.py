@@ -34,7 +34,7 @@ def register_search_activity(url, data):
         print log_formatter(inspect.stack()[0][3], "solr url {} - {}".format(url, data))
 
         response = requests.post(url, data=json.dumps(data))
-        print log_formatter(inspect.stack()[0][3], "got resp search solr")
+        print log_formatter(inspect.stack()[0][3], "got resp search solr - {}".format(response))
 
         if response.status_code != 200:
             return False
