@@ -330,7 +330,6 @@ def search(config_dict, data, user_id):
                   "userid": param_dict['userid'],
                   "platform": param_dict['platform'],
                   "text": param_dict['text'],
-                  "text": param_dict['text'],
                   "author_found": author_found,
                   "pratilipi_found": pratilipi_found}
     thr = threading.Thread(target=register_request, args=(config_dict, param_dict))
