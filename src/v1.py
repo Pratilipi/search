@@ -93,7 +93,7 @@ def trending_search(config_dict, data):
     - fetch data from datastore(solr) for trending search keywords
     """
     #parse query dict
-    language = data.get('languageuage', '*')
+    language = data.get('language', '*')
     platform = data.get('platform', 'web')
     limit = config_dict['trending_limit']
     age = config_dict['trending_age']
@@ -289,7 +289,7 @@ def search(config_dict, data, user_id):
     param_dict = {}
     param_dict['userid'] = user_id
     param_dict['text'] = data.get('text', None)
-    param_dict['language'] = data.get('languageuage', None)
+    param_dict['language'] = data.get('language', None)
     param_dict['platform'] = data.get('platform', 'web')
     param_dict['is_active'] = data.get('is_active', True)
     param_dict['author_limit'] = int(data.get('authorResultCount', 10))
