@@ -12,7 +12,7 @@ from lib.commonfns import log_formatter
 from datetime import datetime
 
 
-def _get_stop_words(language, config):
+def _get_stop_words(config):
     try:
         data = []
         conn = pymysql.connect(host=config['db_host'],
@@ -24,8 +24,6 @@ def _get_stop_words(language, config):
                                cursorclass=pymysql.cursors.DictCursor)
         cursor = conn.cursor()
         sql = 'SELECT word FROM search_stop_word WHERE is_active = 1'
-        sql = sql + ' AND language = "{}"'.format(language) if len(language) > 3 else sql
-        print sql
         cursor.execute(sql)
         data = cursor.fetchall()
         conn.close()
@@ -147,7 +145,7 @@ def trending_search(config_dict, data):
         else:
             print "failed for trending search - {}".format(response.text)
 
-        stop_word = _get_stop_words(language, config_dict)
+        stop_word = _get_stop_words(config_dict)
         print "------> stopword - {}".format(stop_word)
         for sw in stop_word:
             for ky in trending_keywords.keys():
