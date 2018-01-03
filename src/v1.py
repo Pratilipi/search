@@ -2,11 +2,35 @@ import requests
 import inspect
 import redis
 import threading
-from config import stopword
 import simplejson as json
+import pymysql.cursors
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 from lib.commonfns import log_formatter
 from datetime import datetime
+
+
+def _get_stop_words(language):
+    try:
+        data = []
+        conn = pymysql.connect(host=config.DB['host'],
+                               user=config.DB['user'],
+                               password=config.DB['pass'],
+                               db='cms',
+                               charset='utf8mb4',
+                               cursorclass=pymysql.cursors.DictCursor)
+        cursor = conn.cursor()
+        sql = 'SELECT word FROM search_stop_word WHERE is_active = 1'
+        sql = sql + ' AND language = {}'.format(language) if len(language) > 3 else sql
+        print sql
+        cursor.execute(sql)
+        data = conn.cursor.fetchall()
+        conn.close()
+    except Exception as err:
+        print "ERROR - failed to get stop words"
+    return data
 
 
 def _encode_data(data_str):
@@ -122,7 +146,8 @@ def trending_search(config_dict, data):
         else:
             print "failed for trending search - {}".format(response.text)
 
-        for sw in stopword.STOP_WORDS:
+
+        for sw in _get_stop_words(language):
             for ky in trending_keywords.keys():
                 if ky is None:
                     continue 
