@@ -27,11 +27,11 @@ def _get_stop_words(language, config):
         sql = sql + ' AND language = {}'.format(language) if len(language) > 3 else sql
         print sql
         cursor.execute(sql)
-        data = conn.cursor.fetchall()
+        data = cursor.fetchall()
         conn.close()
     except Exception as err:
-        print "ERROR - failed to get stop words"
-    return data
+        print "ERROR - failed to get stop words - {}".format(err)
+    return [i['word'] for i in data]
 
 
 def _encode_data(data_str):
@@ -147,8 +147,9 @@ def trending_search(config_dict, data):
         else:
             print "failed for trending search - {}".format(response.text)
 
-
-        for sw in _get_stop_words(language, config_dict):
+        stop_word = _get_stop_words(language, config_dict)
+        print "------> stopword - {}".format(stop_word)
+        for sw in stop_word:
             for ky in trending_keywords.keys():
                 if ky is None:
                     continue 
@@ -364,5 +365,4 @@ def search(config_dict, data, user_id):
 
     #return response
     return [200, "Success", response]
-
 
