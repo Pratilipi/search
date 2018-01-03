@@ -1,5 +1,6 @@
 {
     "family": "$APP_NAME",
+    "taskRoleArn": "arn:aws:iam::$AWS_PROJ_ID:role/ecsTaskRoleSearch",
     "containerDefinitions": [
         {
             "name": "$APP_NAME",
