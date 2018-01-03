@@ -12,13 +12,14 @@ from lib.commonfns import log_formatter
 from datetime import datetime
 
 
-def _get_stop_words(language):
+def _get_stop_words(language, config):
     try:
         data = []
-        conn = pymysql.connect(host=config.DB['host'],
-                               user=config.DB['user'],
-                               password=config.DB['pass'],
-                               db='cms',
+        conn = pymysql.connect(host=config['db_host'],
+                               user=config['db_user'],
+                               password=config['db_pass'],
+                               port=config['db_port'],
+                               db=config['db_name'],
                                charset='utf8mb4',
                                cursorclass=pymysql.cursors.DictCursor)
         cursor = conn.cursor()
@@ -147,7 +148,7 @@ def trending_search(config_dict, data):
             print "failed for trending search - {}".format(response.text)
 
 
-        for sw in _get_stop_words(language):
+        for sw in _get_stop_words(language, config_dict):
             for ky in trending_keywords.keys():
                 if ky is None:
                     continue 
