@@ -23,14 +23,21 @@ REDIS_DB = 6
 TOP_SEARCH_LIMIT = 10
 TOP_SEARCH_AGE_IN_MIN = 3600
 
+# db access details from parameter store
+USER_NAME = 'root'
+PASSWORD = 'root'
+DB = {'name': 'cms', 'host': '', 'port': 3306, 'user': USER_NAME, 'pass': PASSWORD}
+
 if STAGE in ("gamma", "prod"):
     SOLR_URL = "http://ip-172-31-0-99.ap-southeast-1.compute.internal:8983/solr"
     REDIS_URL = "prod-ecs-001.cpzshl.0001.apse1.cache.amazonaws.com"
+    DB['host'] = 'product.cr3p1oy4g8ad.ap-southeast-1.rds.amazonaws.com'
 elif STAGE == "devo":
     SOLR_URL = "http://ip-172-31-16-221.ap-southeast-1.compute.internal:8983/solr"
     REDIS_URL = "devo-ecs.e6ocw5.0001.apse1.cache.amazonaws.com"
+    DB['host'] = 'ecs-devo-db.ctl0cr5o3mqq.ap-southeast-1.rds.amazonaws.com'
 elif STAGE == "local":
     SOLR_URL = "http://localhost:8983/solr"
     REDIS_URL = "localhost"
     REDIS_PORT = 6379
-    REDIS_DB = 9
+    DB['host'] = 'localhost'
