@@ -31,7 +31,12 @@ config_dict = {'solr_url': config.SOLR_URL,
                'trending_age': config.TOP_SEARCH_AGE_IN_MIN,
                'redis_url': config.REDIS_URL,
                'redis_port': config.REDIS_PORT,
-               'redis_db': config.REDIS_DB,}
+               'redis_db': config.REDIS_DB,
+               'db_host': config.DB['host'],
+               'db_port': config.DB['port'],
+               'db_name': config.DB['name'],
+               'db_user': config.DB['user'],
+               'db_pass': config.DB['pass'], }
 print log_formatter(inspect.stack()[0][3], config_dict)
 
 
