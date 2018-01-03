@@ -8,13 +8,6 @@ API_END_POINT = 'http://localhost' if 'API_END_POINT' not in os.environ else os.
 # aws settings
 AWS_REGION = "ap-southeast-1"
 
-if STAGE != 'local':
-    ssm = boto3.client('ssm', AWS_REGION)
-    response = ssm.get_parameters(Names=['/ecs/cms/mysql/username'], WithDecryption=True)
-    USER_NAME = response['Parameters'][0]['Value']
-    response = ssm.get_parameters(Names=['/ecs/cms/mysql/password'], WithDecryption=True)
-    PASSWORD = response['Parameters'][0]['Value']
-
 # 3rd party services details
 AUTH_SERVICE_URL = API_END_POINT
 FOLLOW_SERVICE_URL = API_END_POINT
@@ -42,6 +35,14 @@ TOP_SEARCH_AGE_IN_MIN = 3600
 # db access details from parameter store
 USER_NAME = 'root'
 PASSWORD = 'root'
+
+if STAGE != 'local':
+    ssm = boto3.client('ssm', AWS_REGION)
+    response = ssm.get_parameters(Names=['/ecs/cms/mysql/username'], WithDecryption=True)
+    USER_NAME = response['Parameters'][0]['Value']
+    response = ssm.get_parameters(Names=['/ecs/cms/mysql/password'], WithDecryption=True)
+    PASSWORD = response['Parameters'][0]['Value']
+
 DB = {'name': 'cms', 'host': '', 'port': 3306, 'user': USER_NAME, 'pass': PASSWORD}
 
 if STAGE in ("gamma", "prod"):
