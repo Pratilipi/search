@@ -1,7 +1,22 @@
 import os
+import boto3
 
 # env
 STAGE = "local" if "STAGE" not in os.environ else os.environ["STAGE"]
+
+# aws settings
+AWS_REGION = "ap-southeast-1"
+
+if STAGE != 'local':
+    ssm = boto3.client('ssm', AWS_REGION)
+    response = ssm.get_parameters(Names=['/ecs/cms/mysql/username'], WithDecryption=True)
+    USER_NAME = response['Parameters'][0]['Value']
+    response = ssm.get_parameters(Names=['/ecs/cms/mysql/password'], WithDecryption=True)
+    PASSWORD = response['Parameters'][0]['Value']
+
+# 3rd party services details
+AUTH_SERVICE_URL = API_END_POINT
+FOLLOW_SERVICE_URL = API_END_POINT
 
 # data source
 SOLR_URL = "http://ip-172-31-16-221.ap-southeast-1.compute.internal:8983/solr"
