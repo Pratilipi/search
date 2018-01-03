@@ -24,7 +24,7 @@ def _get_stop_words(language, config):
                                cursorclass=pymysql.cursors.DictCursor)
         cursor = conn.cursor()
         sql = 'SELECT word FROM search_stop_word WHERE is_active = 1'
-        sql = sql + ' AND language = {}'.format(language) if len(language) > 3 else sql
+        sql = sql + ' AND language = "{}"'.format(language) if len(language) > 3 else sql
         print sql
         cursor.execute(sql)
         data = cursor.fetchall()
