@@ -3,6 +3,7 @@ import boto3
 
 # env
 STAGE = "local" if "STAGE" not in os.environ else os.environ["STAGE"]
+API_END_POINT = 'http://localhost' if 'API_END_POINT' not in os.environ else os.environ['API_END_POINT']
 
 # aws settings
 AWS_REGION = "ap-southeast-1"
