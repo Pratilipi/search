@@ -23,7 +23,7 @@ def _get_stop_words(config):
                                charset='utf8mb4',
                                cursorclass=pymysql.cursors.DictCursor)
         cursor = conn.cursor()
-        sql = 'SELECT word FROM search_stop_word WHERE is_active = 1'
+        sql = 'SELECT word FROM stop_word WHERE is_active = 1'
         cursor.execute(sql)
         data = cursor.fetchall()
         conn.close()
