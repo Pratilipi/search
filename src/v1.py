@@ -217,7 +217,7 @@ def author_data(config_dict, pdict):
                 for row in found_auth:
                     temp = {}
                     temp['authorId'] = row['authorId']
-                    temp['name'] = row['fullName'] if 'fullName' in row else row['fullNameEn']
+                    temp['name'] = row['fullName'] if 'fullName' in row and row.get('fullName', None) is not None else row['fullNameEn']
                     temp['pageUrl'] = row['pageUrl'] if 'pageUrl' in row else ''
                     temp['imageUrl'] = row['coverImageUrl'] if 'coverImageUrl' in row else ''
                     temp['profileImageUrl'] = row['profileImageUrl'] if 'profileImageUrl' in row else ''
