@@ -38,12 +38,12 @@ PASSWORD = 'root'
 
 if STAGE != 'local':
     ssm = boto3.client('ssm', AWS_REGION)
-    response = ssm.get_parameters(Names=['/ecs/cms/mysql/username'], WithDecryption=True)
+    response = ssm.get_parameters(Names=['/ecs/search/mysql/username'], WithDecryption=True)
     USER_NAME = response['Parameters'][0]['Value']
-    response = ssm.get_parameters(Names=['/ecs/cms/mysql/password'], WithDecryption=True)
+    response = ssm.get_parameters(Names=['/ecs/search/mysql/password'], WithDecryption=True)
     PASSWORD = response['Parameters'][0]['Value']
 
-DB = {'name': 'cms', 'host': '', 'port': 3306, 'user': USER_NAME, 'pass': PASSWORD}
+DB = {'name': 'search', 'host': '', 'port': 3306, 'user': USER_NAME, 'pass': PASSWORD}
 
 if STAGE in ("gamma", "prod"):
     SOLR_URL = "http://ip-172-31-0-99.ap-southeast-1.compute.internal:8983/solr"
