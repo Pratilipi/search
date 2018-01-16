@@ -164,7 +164,6 @@ def trending_search(config_dict, data):
             print "failed for trending search - {}".format(response.text)
 
         stop_word = _get_stop_words(config_dict)
-        print "------> stopword - {}".format(stop_word)
         for sw in stop_word:
             for ky in trending_keywords.keys():
                 if ky is None:
@@ -202,7 +201,6 @@ def author_data(config_dict, pdict):
         url = "{}/{}".format(config_dict['solr_url'], "author/select")
 
         print log_formatter(inspect.stack()[0][3], "solr url %s" % url)
-        print param_dict
 
         #prepare author dict
         author = []
@@ -211,7 +209,6 @@ def author_data(config_dict, pdict):
 
         if response.status_code == 200:
             data = json.loads(response.text)
-            print "===========>>>> ", data
             author_count = data['response']['numFound']
             for row in data['response']['docs']:
                 author.append(row['author_id'])
@@ -294,7 +291,6 @@ def pratilipi_data(config_dict, pdict, author_found_list):
             response = requests.get(url, params=param_dict)
             if response.status_code == 200:
                 data = json.loads(response.text)
-                print "===========>>>> ", data
                 pratilipi_count = data['response']['numFound']
                 for row in data['response']['docs']:
                     pratilipi.append(row['pratilipi_id'])
