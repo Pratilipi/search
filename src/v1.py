@@ -12,7 +12,7 @@ from lib.commonfns import log_formatter
 from datetime import datetime
 
 
-def _get_stop_words(config):
+def _get_stop_words_from_db(config):
     try:
         data = []
         conn = pymysql.connect(host=config['db_host'],
@@ -31,6 +31,24 @@ def _get_stop_words(config):
         print "ERROR - failed to get stop words - {}".format(err)
     return [i['word'] for i in data]
 
+
+def _get_stop_words(config_dict):
+    try:
+        # check if exists in cache
+        r = redis.StrictRedis(config_dict['redis_url'], config_dict['redis_port'], config_dict['redis_db'])
+        stop_words = r.smembers('stop_word')
+        if len(stop_words) == 0:
+            print "going to db"
+            stop_words = _get_stop_words_from_db(config_dict)
+            for i in stop_words:
+                r.sadd('stop_word', i)
+            r.expire('stop_word', 21600)
+            return stop_words
+        else:
+            print "found in cache"
+            return list(stop_words)
+    except Exception as err:
+        print "ERROR - failed to get stop words - {}".format(err)
 
 def _encode_data(data_str):
     if data_str is None:
