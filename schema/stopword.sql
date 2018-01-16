@@ -5,4 +5,5 @@ CREATE TABLE stop_word (id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
                         date_created DATETIME DEFAULT CURRENT_TIMESTAMP(),
                         is_active BOOLEAN DEFAULT 1) ;
 
-CREATE INDEX word_idx ON search_stop_word (word) USING BTREE;
+CREATE INDEX word_idx ON stop_word (word) USING BTREE;
+CREATE INDEX is_active_idx ON stop_word (is_active) USING BTREE;
