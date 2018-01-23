@@ -43,6 +43,8 @@ def _get_stop_words(config_dict):
             for i in stop_words:
                 r.sadd('stop_word', i)
             r.expire('stop_word', 21600)
+            sw_cnt = r.smembers('stop_word')
+            print 'elements added to cache - {}'.format(len(sw_cnt))
             return stop_words
         else:
             print "found in cache"
