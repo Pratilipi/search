@@ -17,6 +17,7 @@ COPY wsgi.py /search/
 COPY src/* /search/src/
 COPY lib/* /search/lib/
 COPY config/* /search/config/
+COPY worker.py /search/
 
 #setup nginx for search
 RUN rm /etc/nginx/sites-available/default
