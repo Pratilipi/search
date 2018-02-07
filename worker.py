@@ -172,6 +172,7 @@ class SearchQueue:
             body = ujson.loads(msg['Body'])
             data = body['Message']
             temp = ujson.loads(data)
+            temp = ujson.loads(temp)
 
             event = Event
             event.type = temp['event']
