@@ -172,7 +172,7 @@ class SearchQueue:
             body = ujson.loads(msg['Body'])
             data = body['Message']
             temp = ujson.loads(data)
-            temp = ujson.loads(temp)
+            temp = ujson.loads(temp) if not isinstance(temp, dict) else temp
 
             event = Event
             event.type = temp['event']
