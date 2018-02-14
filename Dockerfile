@@ -1,4 +1,4 @@
-FROM 370531249777.dkr.ecr.ap-south-1.amazonaws.com/ubuntu-nginx:2.0
+FROM 370531249777.dkr.ecr.ap-south-1.amazonaws.com/ubuntu-nginx:2.0.0
 
 #set timezone
 RUN rm /etc/localtime
