@@ -46,7 +46,7 @@ DB['host'] = 'localhost' if 'MASTER_DB_ENDPOINT_RW' not in os.environ else os.en
 #if in devo , port = 6379, and endpoint will come from env var in 
 if STAGE in ("devo", "gamma", "prod"):
     REDIS_URL = "prod-ecs-001.cpzshl.0001.apse1.cache.amazonaws.com" if 'MASTER_REDIS_ENDPOINT' not in os.environ else os.environ['MASTER_REDIS_ENDPOINT']
-    REDIS_PORT = 8080 if 'MASTER_REDIS_ENDPOINT' not in os.environ else 6379 
+    REDIS_PORT = 8080 if 'MASTER_REDIS_PORT' not in os.environ else os.environ['MASTER_REDIS_PORT'] 
 elif STAGE == "local":
     REDIS_URL = "localhost"
     REDIS_PORT = 6379
