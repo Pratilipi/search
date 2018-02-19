@@ -8,15 +8,20 @@ API_END_POINT = 'http://localhost' if 'API_END_POINT' not in os.environ else os.
 # aws settings
 AWS_REGION = "ap-southeast-1"
 
+STAGE_AWS_PROJ_ID_MAP = {"local":381780986962,
+                         "devo":381780986962,
+                         "gamma":370531249777,
+                         "prod": 370531249777
+                        }
 # 3rd party services details
 AUTH_SERVICE_URL = API_END_POINT
 FOLLOW_SERVICE_URL = API_END_POINT
 
 # data source
-SOLR_URL = "http://ip-172-31-16-221.ap-southeast-1.compute.internal:8983/solr"
+SOLR_URL = "http://localhost:8983/solr" if 'SEARCH_SOLR_DB_ENDPOINT' not in os.environ else os.environ['SEARCH_SOLR_DB_ENDPOINT']
 
 # worker config
-QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/{}/{}-search".format(os.environ["AWS_PROJ_ID"], 'devo' if STAGE == 'local' else STAGE)
+QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/{}/{}-search".format(STAGE_AWS_PROJ_ID_MAP[STAGE], 'devo' if STAGE == 'local' else STAGE)
 POLL_SLEEP_TIME = 10
 
 # 3rd party services
@@ -24,8 +29,6 @@ PRATILIPI_SERVICE_URL = "{}/{}".format(os.environ['API_END_POINT'], "pratilipis"
 AUTHOR_SERVICE_URL = "{}/{}".format(os.environ['API_END_POINT'], "authors")
 
 # store analysis
-REDIS_URL = "devo-ecs.e6ocw5.0001.apse1.cache.amazonaws.com"
-REDIS_PORT = 8080
 REDIS_DB = 6
 
 # search app config
@@ -33,28 +36,17 @@ TOP_SEARCH_LIMIT = 10
 TOP_SEARCH_AGE_IN_MIN = 3600
 
 # db access details from parameter store
-USER_NAME = 'root'
-PASSWORD = 'root'
-
-if STAGE != 'local':
-    ssm = boto3.client('ssm', AWS_REGION)
-    response = ssm.get_parameters(Names=['/ecs/search/mysql/username'], WithDecryption=True)
-    USER_NAME = response['Parameters'][0]['Value']
-    response = ssm.get_parameters(Names=['/ecs/search/mysql/password'], WithDecryption=True)
-    PASSWORD = response['Parameters'][0]['Value']
+USER_NAME = 'root' if 'MASTER_MYSQL_DB_USERNAME' not in os.environ else os.environ['MASTER_MYSQL_DB_USERNAME']
+PASSWORD = 'root' if 'MASTER_MYSQL_DB_PASSWORD' not in os.environ else os.environ['MASTER_MYSQL_DB_PASSWORD']
 
 DB = {'name': 'search', 'host': '', 'port': 3306, 'user': USER_NAME, 'pass': PASSWORD}
+DB['host'] = 'localhost' if 'MASTER_DB_ENDPOINT_RW' not in os.environ else os.environ['MASTER_DB_ENDPOINT_RW']
 
-if STAGE in ("gamma", "prod"):
-    SOLR_URL = "http://ip-172-31-0-99.ap-southeast-1.compute.internal:8983/solr"
-    REDIS_URL = "prod-ecs-001.cpzshl.0001.apse1.cache.amazonaws.com"
-    DB['host'] = 'product.cr3p1oy4g8ad.ap-southeast-1.rds.amazonaws.com'
-elif STAGE == "devo":
-    SOLR_URL = "http://ip-172-31-16-221.ap-southeast-1.compute.internal:8983/solr"
-    REDIS_URL = "devo-ecs.e6ocw5.0001.apse1.cache.amazonaws.com"
-    DB['host'] = 'ecs-devo-db.ctl0cr5o3mqq.ap-southeast-1.rds.amazonaws.com'
+
+#if in devo , port = 6379, and endpoint will come from env var in 
+if STAGE in ("devo", "gamma", "prod"):
+    REDIS_URL = "prod-ecs-001.cpzshl.0001.apse1.cache.amazonaws.com" if 'MASTER_REDIS_ENDPOINT' not in os.environ else os.environ['MASTER_REDIS_ENDPOINT']
+    REDIS_PORT = 8080 if 'MASTER_REDIS_ENDPOINT' not in os.environ else 6379 
 elif STAGE == "local":
-    SOLR_URL = "http://localhost:8983/solr"
     REDIS_URL = "localhost"
     REDIS_PORT = 6379
-    DB['host'] = 'localhost'
