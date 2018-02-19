@@ -173,6 +173,7 @@ class SearchQueue:
             data = body['Message']
             temp = ujson.loads(data)
             temp = ujson.loads(temp) if not isinstance(temp, dict) else temp
+            print "found event ---> {}".format(data)
 
             event = Event
             event.type = temp['event']
