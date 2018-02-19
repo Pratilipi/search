@@ -58,13 +58,13 @@ class Author:
                        first_name_en=doc.get('first_name_en', None), last_name_en=doc.get('last_name_en'),
                        pen_name_en=doc.get('pen_name_en', None), summary=doc.get('summary', None))
         self._conn.commit()
-        print "author added ", doc
+        print "author added - ", doc
 
     def delete(self):
         """delete doc"""
         self._conn.delete_query("author_id:{}".format(self.author_id))
         self._conn.commit()
-        print "author deleted ", self.author_id
+        print "author deleted - ", self.author_id
 
     def get(self):
         """get doc"""
@@ -87,7 +87,7 @@ class Author:
         for key in old_doc: setattr(self, key, old_doc[key])
         self.delete()
         self.add()
-        print "author updated ", old_doc
+        print "author updated - ", old_doc
 
 class Pratilipi:
     def __init__(self, kwargs):
@@ -125,13 +125,13 @@ class Pratilipi:
                        summary=doc.get('summary', None), content_type=doc.get('content_type'),
                        category=doc.get('category', None), category_en=doc.get('category_en', None))
         self._conn.commit()
-        print "pratilipi added ", doc
+        print "pratilipi added - ", doc
 
     def delete(self):
         """delete doc"""
         self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
         self._conn.commit()
-        print "pratilipi deleted ", self.pratilipi_id
+        print "pratilipi deleted - ", self.pratilipi_id
 
     def get(self):
         """get doc"""
@@ -154,7 +154,7 @@ class Pratilipi:
         for key in old_doc: setattr(self, key, old_doc[key])
         self.delete()
         self.add()
-        print "pratilipi updated ", old_doc
+        print "pratilipi updated - ", old_doc
 
 class SearchQueue:
     def __init__(self):
@@ -173,7 +173,9 @@ class SearchQueue:
             data = body['Message']
             temp = ujson.loads(data)
             temp = ujson.loads(temp) if not isinstance(temp, dict) else temp
-            print "found event ---> {}".format(data)
+
+            if 'version' not in temp or temp['version'] != "2.0":
+                continue
 
             event = Event
             event.type = temp['event']
@@ -186,21 +188,20 @@ class SearchQueue:
     def process_author(self, action, author_id, kwargs):
         kwargs['authorId'] = author_id
         author = Author(kwargs)
-        print "encountered author ", action, kwargs
+        print "encountered author - ", action, kwargs
         eval("{}.{}()".format("author", action.lower()))
 
     def process_pratilipi(self, action, pratilipi_id, kwargs):
         kwargs['pratilipiId'] = pratilipi_id
         pratilipi = Pratilipi(kwargs)
-        print "encountered pratilipi ", action, kwargs
+        print "encountered pratilipi - ", action, kwargs
         eval("{}.{}()".format("pratilipi", action.lower()))
 
     def process(self):
         """process queue"""
-        print "processing event"
+        print "processing event...."
         events = self.events
         for event in events:
-            print event.__dict__
             resource, action = event.type.upper().split('.')
 
             if event.version != "2.0": continue
