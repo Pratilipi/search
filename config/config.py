@@ -5,14 +5,6 @@ import boto3
 STAGE = "local" if "STAGE" not in os.environ else os.environ["STAGE"]
 API_END_POINT = 'http://localhost' if 'API_END_POINT' not in os.environ else os.environ['API_END_POINT']
 
-# aws settings
-AWS_REGION = "ap-southeast-1"
-
-STAGE_AWS_PROJ_ID_MAP = {"local":381780986962,
-                         "devo":381780986962,
-                         "gamma":370531249777,
-                         "prod": 370531249777
-                        }
 # 3rd party services details
 AUTH_SERVICE_URL = API_END_POINT
 FOLLOW_SERVICE_URL = API_END_POINT
@@ -21,7 +13,7 @@ FOLLOW_SERVICE_URL = API_END_POINT
 SOLR_URL = "http://localhost:8983/solr" if 'SEARCH_SOLR_DB_ENDPOINT' not in os.environ else os.environ['SEARCH_SOLR_DB_ENDPOINT']
 
 # worker config
-QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/{}/{}-search".format(STAGE_AWS_PROJ_ID_MAP[STAGE], 'devo' if STAGE == 'local' else STAGE)
+SQS_QUEUE_URL = os.environ['SQS_QUEUE_URL']
 POLL_SLEEP_TIME = 10
 
 # 3rd party services
