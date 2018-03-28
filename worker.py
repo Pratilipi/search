@@ -12,7 +12,7 @@ sys.setdefaultencoding('utf-8')
 
 # config
 SOLR_URL = config.SOLR_URL
-QUEUE_URL = config.QUEUE_URL
+SQS_QUEUE_URL = config.SQS_QUEUE_URL
 POLL_SLEEP_TIME = config.POLL_SLEEP_TIME
 
 class Event:
@@ -170,7 +170,7 @@ class SearchQueue:
     def __init__(self):
         """init sqs"""
         setattr(self, 'client', boto3.client('sqs', region_name='ap-southeast-1'))
-        setattr(self, 'url', QUEUE_URL)
+        setattr(self, 'url', SQS_QUEUE_URL)
 
     def poll(self):
         """poll queue"""
