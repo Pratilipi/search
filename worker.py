@@ -14,6 +14,7 @@ sys.setdefaultencoding('utf-8')
 SOLR_URL = config.SOLR_URL
 SQS_QUEUE_URL = config.SQS_QUEUE_URL
 POLL_SLEEP_TIME = config.POLL_SLEEP_TIME
+SQS_QUEUE_REGION = config.SQS_QUEUE_REGION
 
 class Event:
     def __init__(self):
@@ -166,7 +167,7 @@ class Pratilipi:
 class SearchQueue:
     def __init__(self):
         """init sqs"""
-        setattr(self, 'client', boto3.client('sqs', region_name='ap-southeast-1'))
+        setattr(self, 'client', boto3.client('sqs', region_name=SQS_QUEUE_REGION))
         setattr(self, 'url', SQS_QUEUE_URL)
 
     def poll(self):
