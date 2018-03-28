@@ -52,10 +52,7 @@ class Author:
         
     def add(self):
         """add doc"""
-        old_doc = self.get()
-
-        if old_doc is not None:
-            return
+        if self.get() is not None: return
 
         doc = self.__dict__
         self._conn.add(author_id=doc['author_id'], language=doc.get('language'), first_name=doc.get('first_name',None),
@@ -67,6 +64,8 @@ class Author:
 
     def delete(self):
         """delete doc"""
+        if self.get() is None: return
+
         self._conn.delete_query("author_id:{}".format(self.author_id))
         self._conn.commit()
         print "author deleted - ", self.author_id
@@ -123,10 +122,7 @@ class Pratilipi:
 
     def add(self):
         """add doc"""
-        old_doc = self.get()
-
-        if old_doc is not None:
-            return
+        if self.get() is not None: return
 
         print "in pratilipi add"
         doc = self.__dict__
@@ -139,6 +135,7 @@ class Pratilipi:
 
     def delete(self):
         """delete doc"""
+        if self.get() is None: return
         self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
         self._conn.commit()
         print "pratilipi deleted - ", self.pratilipi_id
@@ -215,9 +212,17 @@ class SearchQueue:
         for event in events:
             resource, action = event.type.upper().split('.')
 
-            if event.version != "2.0": continue
-            if resource not in ("AUTHOR", "PRATILIPI"): continue
-            if action not in ("ADD", "DELETE", "UPDATE"): continue
+            if event.version != "2.0":
+                self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
+                continue
+
+            if resource not in ("AUTHOR", "PRATILIPI"):
+                self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
+                continue
+
+            if action not in ("ADD", "DELETE", "UPDATE"):
+                self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
+                continue
 
             if resource == "AUTHOR":
                 self.process_author(action, event.resource_id, event.message)
