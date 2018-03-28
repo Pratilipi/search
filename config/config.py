@@ -11,6 +11,7 @@ FOLLOW_SERVICE_URL = API_END_POINT
 
 # data source
 SOLR_URL = "http://localhost:8983/solr" if 'SEARCH_SOLR_DB_ENDPOINT' not in os.environ else os.environ['SEARCH_SOLR_DB_ENDPOINT']
+SQS_QUEUE_REGION = os.environ['SQS_QUEUE_REGION']
 
 # worker config
 SQS_QUEUE_URL = os.environ['SQS_QUEUE_URL']
