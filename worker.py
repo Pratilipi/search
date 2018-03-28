@@ -52,6 +52,11 @@ class Author:
         
     def add(self):
         """add doc"""
+        old_doc = self.get()
+
+        if old_doc is not None:
+            return
+
         doc = self.__dict__
         self._conn.add(author_id=doc['author_id'], language=doc.get('language'), first_name=doc.get('first_name',None),
                        last_name=doc.get('last_name', None), pen_name=doc.get('pen_name', None),
@@ -118,6 +123,11 @@ class Pratilipi:
 
     def add(self):
         """add doc"""
+        old_doc = self.get()
+
+        if old_doc is not None:
+            return
+
         print "in pratilipi add"
         doc = self.__dict__
         self._conn.add(pratilipi_id=doc['pratilipi_id'], language=doc.get('language', None), author_id=doc.get('author_id',None),
@@ -175,6 +185,7 @@ class SearchQueue:
             temp = ujson.loads(temp) if not isinstance(temp, dict) else temp
 
             if 'version' not in temp or temp['version'] != "2.0":
+                self.client.delete_message( QueueUrl=self.url, ReceiptHandle=msg['ReceiptHandle'] )
                 continue
 
             event = Event
