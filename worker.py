@@ -182,9 +182,11 @@ class SearchQueue:
             temp = ujson.loads(data)
             temp = ujson.loads(temp) if not isinstance(temp, dict) else temp
 
+            """
             if 'version' not in temp or temp['version'] != "2.0":
                 self.client.delete_message( QueueUrl=self.url, ReceiptHandle=msg['ReceiptHandle'] )
                 continue
+            """
 
             event = Event
             event.type = temp['event']
@@ -213,9 +215,11 @@ class SearchQueue:
         for event in events:
             resource, action = event.type.upper().split('.')
 
+            """
             if event.version != "2.0":
                 self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
                 continue
+            """
 
             if resource not in ("AUTHOR", "PRATILIPI"):
                 self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
