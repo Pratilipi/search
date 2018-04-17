@@ -230,10 +230,13 @@ class SearchQueue:
                 continue
 
             if resource == "AUTHOR":
+                print "processing msg_id: {}".format(event.rcpthandle)
                 self.process_author(action, event.resource_id, event.message)
             elif resource == "PRATILIPI":
+                print "processing msg_id: {}".format(event.rcpthandle)
                 self.process_pratilipi(action, event.resource_id, event.message)
             self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
+            print "deleted msg_id: {}".format(event.rcpthandle)
 
 print "worker started listening for events...."
 while True:
