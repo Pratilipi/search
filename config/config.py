@@ -15,7 +15,7 @@ SQS_QUEUE_REGION = os.environ['SQS_QUEUE_REGION']
 
 # worker config
 SQS_QUEUE_URL = os.environ['SQS_QUEUE_URL']
-POLL_SLEEP_TIME = 10
+POLL_SLEEP_TIME = 1
 
 # 3rd party services
 PRATILIPI_SERVICE_URL = "{}/{}".format(os.environ['API_END_POINT'], "pratilipis")
