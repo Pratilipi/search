@@ -173,7 +173,7 @@ class SearchQueue:
     def poll(self):
         """poll queue"""
         setattr(self, 'events', [])
-        response = self.client.receive_message(QueueUrl=self.url, MaxNumberOfMessages=10,  AttributeNames=[ 'SentTimestamp' ])
+        response = self.client.receive_message(QueueUrl=self.url, MaxNumberOfMessages=1,  AttributeNames=[ 'SentTimestamp' ])
         if 'Messages' not in response: return
         for msg in response['Messages']:
             # TODO validate request as per schema
