@@ -127,17 +127,21 @@ class Pratilipi:
 
         print "in pratilipi add"
         doc = self.__dict__
+        print "------------> pratilipi add in <-----------------"
         self._conn.add(pratilipi_id=doc['pratilipi_id'], language=doc.get('language', None), author_id=doc.get('author_id',None),
                        title=doc.get('title', None), title_en=doc.get('title_en', None),
                        summary=doc.get('summary', None), content_type=doc.get('content_type'),
                        category=doc.get('category', None), category_en=doc.get('category_en', None))
+        print "------------> pratilipi add out <-----------------"
         self._conn.commit()
         print "pratilipi added - ", doc
 
     def delete(self):
         """delete doc"""
         if self.get() is None: return
+        print "------------> pratilipi del in <-----------------"
         self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
+        print "------------> pratilipi del out <-----------------"
         self._conn.commit()
         print "pratilipi deleted - ", self.pratilipi_id
 
