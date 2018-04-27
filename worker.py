@@ -241,10 +241,14 @@ while True:
         print "poll queue...."
         event_q = SearchQueue()
         event_q.poll()
+    except Exception as err:
+        print "ERROR - sqs polling failed, {}".format(err)
 
+    try:
         if len(event_q.events) > 0:
             event_q.process()
         print "sleeping now...."
         time.sleep(POLL_SLEEP_TIME)
     except Exception as err:
-        print "ERROR - sqs polling failed, {}".format(err)
+        print "ERROR - event processing failed, {}".format(err)
+
