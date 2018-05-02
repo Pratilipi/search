@@ -61,7 +61,7 @@ class Author:
                        first_name_en=doc.get('first_name_en', None), last_name_en=doc.get('last_name_en'),
                        pen_name_en=doc.get('pen_name_en', None), summary=doc.get('summary', None))
         self._conn.commit()
-        print "author added - ", doc
+        print "------author added - ", doc['author_id']
 
     def delete(self):
         """delete doc"""
@@ -69,7 +69,7 @@ class Author:
 
         self._conn.delete_query("author_id:{}".format(self.author_id))
         self._conn.commit()
-        print "author deleted - ", self.author_id
+        print "------author deleted - ", self.author_id
 
     def get(self):
         """get doc"""
@@ -84,7 +84,7 @@ class Author:
         old_doc = self.get()
 
         if old_doc is None:
-            self.add()
+            print "------ERROR - can't update author not found - {}".format(self.author_id)
             return
 
         new_doc = self.__dict__
@@ -92,7 +92,7 @@ class Author:
         for key in old_doc: setattr(self, key, old_doc[key])
         self.delete()
         self.add()
-        print "author updated - ", old_doc
+        print "------author updated - {}".format(self.author_id)
 
 class Pratilipi:
     def __init__(self, kwargs):
@@ -125,26 +125,23 @@ class Pratilipi:
         """add doc"""
         if self.get() is not None: return
 
-        print "in pratilipi add"
         doc = self.__dict__
-        print "author id: {}".format(doc.get('author_id',None))
         self._conn.add(pratilipi_id=doc['pratilipi_id'], language=doc.get('language', None), author_id=doc.get('author_id',None),
                        title=doc.get('title', None), title_en=doc.get('title_en', None),
                        summary=doc.get('summary', None), content_type=doc.get('content_type'),
                        category=doc.get('category', None), category_en=doc.get('category_en', None))
         self._conn.commit()
-        print "pratilipi added - ", doc
+        print "------pratilipi added - {}".format(doc['pratilipi_id'])
 
     def delete(self):
         """delete doc"""
         if self.get() is None: return
         self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
         self._conn.commit()
-        print "pratilipi deleted - ", self.pratilipi_id
+        print "------pratilipi deleted - ", self.pratilipi_id
 
     def get(self):
         """get doc"""
-        print "get pratilipi from solr - {}".format(self.pratilipi_id)
         dataset = self._conn.query("pratilipi_id:{}".format(self.pratilipi_id))
         data = None
         for row in dataset:
@@ -156,9 +153,7 @@ class Pratilipi:
         old_doc = self.get()
 
         if old_doc is None:
-            print "in update, old pratilipi not found"
-            print "can't add as original pratilipi id is not found"
-            #self.add()
+            print "------ERROR - can't update pratilipi not found - {}".format(self.pratilipi_id)
             return
 
         new_doc = self.__dict__
@@ -166,7 +161,7 @@ class Pratilipi:
         for key in old_doc: setattr(self, key, old_doc[key])
         self.delete()
         self.add()
-        print "pratilipi updated - ", old_doc
+        print "------pratilipi updated - ", self.pratilpi_id
 
 class SearchQueue:
     def __init__(self):
@@ -197,18 +192,18 @@ class SearchQueue:
     def process_author(self, action, author_id, kwargs):
         kwargs['authorId'] = author_id
         author = Author(kwargs)
-        print "encountered author - ", action, kwargs
+        print "----encountered author - ", action, kwargs
         eval("{}.{}()".format("author", action.lower()))
 
     def process_pratilipi(self, action, pratilipi_id, kwargs):
         kwargs['pratilipiId'] = pratilipi_id
         pratilipi = Pratilipi(kwargs)
-        print "encountered pratilipi - ", action, kwargs
+        print "----encountered pratilipi - ", action, kwargs
         eval("{}.{}()".format("pratilipi", action.lower()))
 
     def process(self):
         """process queue"""
-        print "processing event...."
+        print "--processing event"
         events = self.events
         for event in events:
             resource, action = event.type.upper().split('.')
