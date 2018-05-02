@@ -128,26 +128,23 @@ class Pratilipi:
         print "in pratilipi add"
         doc = self.__dict__
         print "author id: {}".format(doc.get('author_id',None))
-        print "------------> pratilipi add in <-----------------"
         self._conn.add(pratilipi_id=doc['pratilipi_id'], language=doc.get('language', None), author_id=doc.get('author_id',None),
                        title=doc.get('title', None), title_en=doc.get('title_en', None),
                        summary=doc.get('summary', None), content_type=doc.get('content_type'),
                        category=doc.get('category', None), category_en=doc.get('category_en', None))
-        print "------------> pratilipi add out <-----------------"
         self._conn.commit()
         print "pratilipi added - ", doc
 
     def delete(self):
         """delete doc"""
         if self.get() is None: return
-        print "------------> pratilipi del in <-----------------"
         self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
-        print "------------> pratilipi del out <-----------------"
         self._conn.commit()
         print "pratilipi deleted - ", self.pratilipi_id
 
     def get(self):
         """get doc"""
+        print "get pratilipi from solr - {}".format(self.pratilipi_id)
         dataset = self._conn.query("pratilipi_id:{}".format(self.pratilipi_id))
         data = None
         for row in dataset:
@@ -159,7 +156,9 @@ class Pratilipi:
         old_doc = self.get()
 
         if old_doc is None:
-            self.add()
+            print "in update, old pratilipi not found"
+            print "can't add as original pratilipi id is not found"
+            #self.add()
             return
 
         new_doc = self.__dict__
@@ -187,12 +186,6 @@ class SearchQueue:
             temp = ujson.loads(data)
             temp = ujson.loads(temp) if not isinstance(temp, dict) else temp
 
-            """
-            if 'version' not in temp or temp['version'] != "2.0":
-                self.client.delete_message( QueueUrl=self.url, ReceiptHandle=msg['ReceiptHandle'] )
-                continue
-            """
-
             event = Event
             event.type = temp['event']
             event.version = temp['version']
@@ -219,12 +212,6 @@ class SearchQueue:
         events = self.events
         for event in events:
             resource, action = event.type.upper().split('.')
-
-            """
-            if event.version != "2.0":
-                self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
-                continue
-            """
 
             if resource not in ("AUTHOR", "PRATILIPI"):
                 self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
