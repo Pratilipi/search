@@ -127,7 +127,7 @@ class Pratilipi:
 
         print "in pratilipi add"
         doc = self.__dict__
-        print doc
+        print "author id: {}".format(doc.get('author_id',None))
         print "------------> pratilipi add in <-----------------"
         self._conn.add(pratilipi_id=doc['pratilipi_id'], language=doc.get('language', None), author_id=doc.get('author_id',None),
                        title=doc.get('title', None), title_en=doc.get('title_en', None),
