@@ -161,7 +161,7 @@ class Pratilipi:
         for key in old_doc: setattr(self, key, old_doc[key])
         self.delete()
         self.add()
-        print "------pratilipi updated - ", self.pratilpi_id
+        print "------pratilipi updated - ", self.pratilipi_id
 
 class SearchQueue:
     def __init__(self):
