@@ -32,7 +32,14 @@ class Event:
 class Author:
     def __init__(self, kwargs):
         """init"""
-        self._conn = solr.SolrConnection('{}/author'.format(SOLR_URL))
+        """solr connection setup"""
+	self._conn = solr.SolrConnection('{}/author'.format(SOLR_URL))
+
+ 	"""algolia connection setup"""
+	algolia_client = algoliasearch.Client(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
+	algolia_client.search_timeout = (1, 5)
+	algolia_client.timeout = (1,30)
+	self._algolia = algolia_client
 
         for name in kwargs:
             attribute = self.transformer(name)
@@ -59,14 +66,35 @@ class Author:
         
     def add(self):
         """add doc"""
-        if self.get() is not None: return
+	doc = self.__dict__
 
-        doc = self.__dict__
+        if self.get() is not None: return
         self._conn.add(author_id=doc['author_id'], language=doc.get('language'), first_name=doc.get('first_name',None),
                        last_name=doc.get('last_name', None), pen_name=doc.get('pen_name', None),
                        first_name_en=doc.get('first_name_en', None), last_name_en=doc.get('last_name_en'),
                        pen_name_en=doc.get('pen_name_en', None), summary=doc.get('summary', None))
         self._conn.commit()
+	print "Author added to solr"
+	
+	"""add author to algolia"""
+	if doc.get('language') is not None:
+                self._algolia_index = self._algolia.init_index("{}_author".format(doc.get('language').lower()))
+		print "{}_author".format(doc.get('language').lower())
+
+	if self.getAlgoliaObject() is not None: return
+
+	author = {
+		"objectID":doc['author_id'],
+		"name":doc.get('first_name', "")+" "+doc.get("last_name",""),
+		"nameEn":doc.get('first_name_en',"")+" "+doc.get("last_name_en",""),
+		"penName":doc.get('pen_name',""),
+		"penNameEn":doc.get('pen_name_en',"")
+	}
+	
+	author_json = ujson.loads(ujson.dumps(author))
+	self._algolia_index.add_object(author_json)
+	print "Author added to algolia"
+
         print "------author added - ", doc['author_id']
 
     def delete(self):
@@ -75,6 +103,13 @@ class Author:
 
         self._conn.delete_query("author_id:{}".format(self.author_id))
         self._conn.commit()
+	
+	"""delete from algolia"""
+	#doc = self.__dict__
+	#if doc.get('langauge') is not None:
+        #       algolia_index = self._algolia("{}_author".format(doc.get('language')))
+	#	algolia_index.delete_object(self.author_id)
+
         print "------author deleted - ", self.author_id
 
     def get(self):
@@ -84,34 +119,69 @@ class Author:
         for row in dataset:
             data = row
         return data
-
+	
     def update(self):
         """update doc"""
-        old_doc = self.get()
+	new_doc = self.__dict__
 
+	old_doc = self.get()
         if old_doc is None:
             print "------ERROR - can't update author not found - {}".format(self.author_id)
             return
 
-        new_doc = self.__dict__
         for key in new_doc: old_doc[key] = new_doc[key]
         for key in old_doc: setattr(self, key, old_doc[key])
         self.delete()
         self.add()
+	
+	"""update algolia object"""
+	if new_doc.get('language') is not None:
+                self._algolia_index = self._algolia.init_index("{}_author".format(new_doc.get('language').lower()))
+                print "{}_author".format(new_doc.get('language').lower())
+	
+	old_doc = self.getAlgoliaObject()
+
+	if old_doc is None:
+	    print "------ERROR - can't update author not found - {}".format(self.author_id)
+	    return
+
+	name = new_doc.get("first_name","")+" "+new_doc.get("last_name","")
+	nameEn = new_doc.get("first_name_en","")+" "+new_doc.get("last_name_en","")
+	penName = new_doc.get("pen_name","")
+	penNameEn = new_doc.get("pen_name_en","")
+	if old_doc['name'] != name or old_doc['nameEn'] != nameEn or old_doc['penName'] != penName or old_doc['penNameEn'] != penNameEn:
+		new_object = {
+			"objectID":new_doc['author_id'],
+	                "name":name,
+        	        "nameEn":nameEn,
+                	"penName":penName,
+	                "penNameEn":penNameEn
+		}
+		author_json = ujson.loads(ujson.dumps(new_object))
+		self._algolia_index.partial_update_object(author_json)
+
         print "------author updated - {}".format(self.author_id)
+
+    def getAlgoliaObject(self):
+	"""get from algolia"""
+	try:
+		record = self._algolia_index.get_object(self.author_id)
+		return ujson.loads(ujson.dumps(record))
+	except Exception as err:
+		return None
 
 class Pratilipi:
     def __init__(self, kwargs):
         """init"""
-        #self._conn = solr.SolrConnection('{}/pratilipi'.format(SOLR_URL))
-	#print "solr connection successful"
+        	
+	"""solr connection setup"""
+	self._conn = solr.SolrConnection('{}/pratilipi'.format(SOLR_URL))
 	
 	"""algolia connection setup"""
 	algolia_client = algoliasearch.Client(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
 	algolia_client.search_timeout = (1, 5)
 	algolia_client.timeout = (1,30)
 	self._algolia = algolia_client
-	print "algolia connection successful"
 
         for name in kwargs:
             attribute = self.transformer(name)
@@ -120,8 +190,7 @@ class Pratilipi:
             setattr(self, attribute, value)
 	
     def __del__(self):
-	print "delete connection"
-        #self._conn.close()
+        self._conn.close()
 
     def transformer(self, key):
         key = key.lower().strip()
@@ -138,78 +207,80 @@ class Pratilipi:
         return attribute[key] if key in attribute else None
 
     def add(self):
+	doc = self.__dict__
         """add doc"""
-        #if self.getAlgoliaObject() is not None: return
+	if self.get() is not None: return
 
-	#print "Adding pratilipi to solr"
-        doc = self.__dict__
-        #self._conn.add(pratilipi_id=doc['pratilipi_id'], language=doc.get('language', None), author_id=doc.get('author_id',None),
-        #               title=doc.get('title', None), title_en=doc.get('title_en', None),
-        #               summary=doc.get('summary', None), content_type=doc.get('content_type'),
-        #               category=doc.get('category', None), category_en=doc.get('category_en', None))
-        #self._conn.commit()
-	#"Pratilipi added to solr"
-
+        self._conn.add(pratilipi_id=doc['pratilipi_id'], language=doc.get('language', None), author_id=doc.get('author_id',None),
+                       title=doc.get('title', None), title_en=doc.get('title_en', None),
+                       summary=doc.get('summary', None), content_type=doc.get('content_type'),
+                       category=doc.get('category', None), category_en=doc.get('category_en', None))
+        self._conn.commit()
+	print "Pratilipi added to solr"
+	
+	
 	"""add pratilipi to algolia"""
-	print "Adding pratilipi to algolia"
-	print doc.get('language',None)
 	if doc.get('language') is not None:
-                self._algolia_index = self._algolia("{}_pratilipi".format(doc.get('language')))
-		print "{}_pratilipi".format(doc.get('language'))
+                self._algolia_index = self._algolia.init_index("{}_pratilipi".format(doc.get('language').lower()))
+		print "{}_pratilipi".format(doc.get('language').lower())
+
+	if self.getAlgoliaObject() is not None: return
+
 	pratilipi = {
 		"objectID":doc['pratilipi_id'],
 		"title":doc.get('title', ""),
 		"titleEn":doc.get('title_en',""),
 		"authorID":doc.get('author_id',"")
 	}
-	print pratilipi
-	pratilipi_json = ujson.dumps(pratilipi)
-	print pratilipi_json
+	
+	pratilipi_json = ujson.loads(ujson.dumps(pratilipi))
 	self._algolia_index.add_object(pratilipi_json)
 	print "Pratilipi added to algolia"
+
         print "------pratilipi added - {}".format(doc['pratilipi_id'])
 
     def delete(self):
         """delete doc"""
-        #if self.get() is None: return
-        #self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
-        #self._conn.commit()
+        if self.get() is None: return
+        self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
+        self._conn.commit()
 
 	"""delete from algolia"""
 	#doc = self.__dict__
 	#if doc.get('langauge') is not None:
-        #        algolia_index = self._algolia("{}_pratilipi".format(doc.get('language')))
+        #       algolia_index = self._algolia("{}_pratilipi".format(doc.get('language')))
 	#	algolia_index.delete_object(self.pratilipi_id)
 
         print "------pratilipi deleted - ", self.pratilipi_id
 
     def get(self):
         """get doc"""
-	print "get and return pratilipi"
-        #dataset = self._conn.query("pratilipi_id:{}".format(self.pratilipi_id))
-        #data = None
-        #for row in dataset:
-        #    data = row
-        #return data
-
+	
+        dataset = self._conn.query("pratilipi_id:{}".format(self.pratilipi_id))
+        data = None
+        for row in dataset:
+            data = row
+        return data
+	
     def update(self):
-        #"""update doc"""
-        #old_doc = self.get()
-
-        #if old_doc is None:
-        #    print "------ERROR - can't update pratilipi not found - {}".format(self.pratilipi_id)
-        #    return
-
-	old_doc = getAlgoliaObject()
-        new_doc = self.__dict__
-        for key in new_doc: old_doc[key] = new_doc[key]
+        """update doc"""
+	new_doc = self.__dict__
+        old_doc = self.get()
+        if old_doc is None:
+            print "------ERROR - can't update pratilipi not found - {}".format(self.pratilipi_id)
+            return
+	
+	for key in new_doc: old_doc[key] = new_doc[key]
         for key in old_doc: setattr(self, key, old_doc[key])
-        #self.delete()
-        #self.add()
+        self.delete()
+        self.add()
 
 	"""update algolia object"""
-	if new_doc.get('langauge') is not None:
-                self._algolia_index = self._algolia("{}_pratilipi".format(new_doc.get('language')))
+	if new_doc.get('language') is not None:
+                self._algolia_index = self._algolia.init_index("{}_pratilipi".format(new_doc.get('language').lower()))
+                print "{}_pratilipi".format(new_doc.get('language').lower())
+	
+	old_doc = self.getAlgoliaObject()
 
 	if old_doc is None:
 	    print "------ERROR - can't update pratilipi not found - {}".format(self.pratilipi_id)
@@ -222,16 +293,18 @@ class Pratilipi:
 			"titleEn":new_doc.get('title_en',""),
 			"authorID":new_doc.get('author_id',"")						
 		}
-		pratilipi_json = ujson.dumps(new_object)
+		pratilipi_json = ujson.loads(ujson.dumps(new_object))
 		self._algolia_index.partial_update_object(pratilipi_json)	
 		
-	
         print "------pratilipi updated - ", self.pratilipi_id
 
     def getAlgoliaObject(self):
 	"""get from algolia"""
-	record = self._algolia_index.get_object(self.pratilipi_id)
-	return ujson.loads(record)
+	try:
+		record = self._algolia_index.get_object(self.pratilipi_id)
+		return ujson.loads(ujson.dumps(record))
+	except Exception as err:
+		return None
 
 
 class SearchQueue:
@@ -243,7 +316,8 @@ class SearchQueue:
     def poll(self):
         """poll queue"""
         setattr(self, 'events', [])
-        response = self.client.receive_message(QueueUrl=self.url, MaxNumberOfMessages=1,  AttributeNames=[ 'SentTimestamp' ])
+        
+	response = self.client.receive_message(QueueUrl=self.url, MaxNumberOfMessages=1,  AttributeNames=[ 'SentTimestamp' ])
         if 'Messages' not in response: return
         for msg in response['Messages']:
             # TODO validate request as per schema
@@ -259,7 +333,40 @@ class SearchQueue:
             event.message = {} if 'message' not in temp else temp['message']
             event.rcpthandle = msg['ReceiptHandle']
             self.events.append(event)
-
+	
+	"""
+	event = Event
+	event.type = "PRATILIPI.ADD"
+	event.version = "v2.0"
+	event.resource_id = 63239529976300602
+	event.message = {
+		"title":"Title",
+		"titleEn":"Title english ADD 2",
+		"language":"HINDI",
+		"pratilipiId":"63239529976300601",
+		"authorId":"6800000000409487",
+		"contentType":"HINDI"
+	}
+	event.rcpthandle = "abcdefghijklmnop..."
+	self.events.append(event)
+	
+	event = Event
+	event.type = "AUTHOR.UPDATE"
+	event.version = "v2.0"
+	event.resource_id = 68000000004094871
+	event.message = {
+                "firstName":"firstname updated",
+		"lastName":"lastName",
+		"firstNameEn":"firstname en",
+		"lastNameEn":"lastname en",
+		"penName":"pen name",
+		"penNameEn":"pen name en",
+                "authorId":"68000000004094871",
+		"language":"HINDI"
+        }
+        event.rcpthandle = "abcdefghijklmnop..."
+        self.events.append(event)
+	"""	
     def process_author(self, action, author_id, kwargs):
         kwargs['authorId'] = author_id
         author = Author(kwargs)
@@ -309,4 +416,5 @@ while True:
         time.sleep(POLL_SLEEP_TIME)
     except Exception as err:
         print "ERROR - event processing failed, {}".format(err)
+
 
