@@ -103,13 +103,15 @@ class Author:
 class Pratilipi:
     def __init__(self, kwargs):
         """init"""
-        self._conn = solr.SolrConnection('{}/pratilipi'.format(SOLR_URL))
+        #self._conn = solr.SolrConnection('{}/pratilipi'.format(SOLR_URL))
+	#print "solr connection successful"
 	
 	"""algolia connection setup"""
 	algolia_client = algoliasearch.Client(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
 	algolia_client.search_timeout = (1, 5)
 	algolia_client.timeout = (1,30)
 	self._algolia = algolia_client
+	print "algolia connection successful"
 
         for name in kwargs:
             attribute = self.transformer(name)
@@ -117,11 +119,9 @@ class Pratilipi:
             value = kwargs[name]
             setattr(self, attribute, value)
 	
-	if doc.get('langauge') is not None:
-		self._algolia_index = self._algolia("{}_pratilipi".format(doc.get('language'))) 
-
     def __del__(self):
-        self._conn.close()
+	print "delete connection"
+        #self._conn.close()
 
     def transformer(self, key):
         key = key.lower().strip()
@@ -139,82 +139,98 @@ class Pratilipi:
 
     def add(self):
         """add doc"""
-        if self.get() is not None: return
+        #if self.getAlgoliaObject() is not None: return
 
+	#print "Adding pratilipi to solr"
         doc = self.__dict__
-        self._conn.add(pratilipi_id=doc['pratilipi_id'], language=doc.get('language', None), author_id=doc.get('author_id',None),
-                       title=doc.get('title', None), title_en=doc.get('title_en', None),
-                       summary=doc.get('summary', None), content_type=doc.get('content_type'),
-                       category=doc.get('category', None), category_en=doc.get('category_en', None))
-        self._conn.commit()
+        #self._conn.add(pratilipi_id=doc['pratilipi_id'], language=doc.get('language', None), author_id=doc.get('author_id',None),
+        #               title=doc.get('title', None), title_en=doc.get('title_en', None),
+        #               summary=doc.get('summary', None), content_type=doc.get('content_type'),
+        #               category=doc.get('category', None), category_en=doc.get('category_en', None))
+        #self._conn.commit()
+	#"Pratilipi added to solr"
 
 	"""add pratilipi to algolia"""
-	pratilip = {
+	print "Adding pratilipi to algolia"
+	print doc.get('language',None)
+	if doc.get('language') is not None:
+                self._algolia_index = self._algolia("{}_pratilipi".format(doc.get('language')))
+		print "{}_pratilipi".format(doc.get('language'))
+	pratilipi = {
 		"objectID":doc['pratilipi_id'],
 		"title":doc.get('title', ""),
 		"titleEn":doc.get('title_en',""),
 		"authorID":doc.get('author_id',"")
 	}
-	pratilipi_json = ujson.dumps(pratilip)
-	self._algolia.add_object(pratilipi_json)
-
+	print pratilipi
+	pratilipi_json = ujson.dumps(pratilipi)
+	print pratilipi_json
+	self._algolia_index.add_object(pratilipi_json)
+	print "Pratilipi added to algolia"
         print "------pratilipi added - {}".format(doc['pratilipi_id'])
 
     def delete(self):
         """delete doc"""
-        if self.get() is None: return
-        self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
-        self._conn.commit()
+        #if self.get() is None: return
+        #self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
+        #self._conn.commit()
 
 	"""delete from algolia"""
-	self._algolia.delete_object(self.pratilipi_id)
+	#doc = self.__dict__
+	#if doc.get('langauge') is not None:
+        #        algolia_index = self._algolia("{}_pratilipi".format(doc.get('language')))
+	#	algolia_index.delete_object(self.pratilipi_id)
 
         print "------pratilipi deleted - ", self.pratilipi_id
 
     def get(self):
         """get doc"""
-        dataset = self._conn.query("pratilipi_id:{}".format(self.pratilipi_id))
-        data = None
-        for row in dataset:
-            data = row
-        return data
+	print "get and return pratilipi"
+        #dataset = self._conn.query("pratilipi_id:{}".format(self.pratilipi_id))
+        #data = None
+        #for row in dataset:
+        #    data = row
+        #return data
 
     def update(self):
-        """update doc"""
-        old_doc = self.get()
+        #"""update doc"""
+        #old_doc = self.get()
 
-        if old_doc is None:
-            print "------ERROR - can't update pratilipi not found - {}".format(self.pratilipi_id)
-            return
+        #if old_doc is None:
+        #    print "------ERROR - can't update pratilipi not found - {}".format(self.pratilipi_id)
+        #    return
 
+	old_doc = getAlgoliaObject()
         new_doc = self.__dict__
         for key in new_doc: old_doc[key] = new_doc[key]
         for key in old_doc: setattr(self, key, old_doc[key])
-        self.delete()
-        self.add()
+        #self.delete()
+        #self.add()
 
 	"""update algolia object"""
-	old_object = getAlgoliaObject()
-	if old_object is None:
+	if new_doc.get('langauge') is not None:
+                self._algolia_index = self._algolia("{}_pratilipi".format(new_doc.get('language')))
+
+	if old_doc is None:
 	    print "------ERROR - can't update pratilipi not found - {}".format(self.pratilipi_id)
 	    return
 
-	if old_object['title'] != new_doc['title'] or old_object['titleEn'] != new_doc['title_en']:
+	if old_doc['title'] != new_doc['title'] or old_doc['titleEn'] != new_doc['title_en']:
 		new_object = {
-			"objectID":doc['pratilipi_id'],
-			"title":doc.get('title', ""),
-			"titleEn":doc.get('title_en',""),
-			"authorID":doc.get('author_id',"")						
+			"objectID":new_doc['pratilipi_id'],
+			"title":new_doc.get('title', ""),
+			"titleEn":new_doc.get('title_en',""),
+			"authorID":new_doc.get('author_id',"")						
 		}
 		pratilipi_json = ujson.dumps(new_object)
-		self._algolia.partial_update_object(pratilipi_json)	
+		self._algolia_index.partial_update_object(pratilipi_json)	
 		
 	
         print "------pratilipi updated - ", self.pratilipi_id
 
     def getAlgoliaObject(self):
 	"""get from algolia"""
-	record = self._algolia.get_object(self.pratilipi_id)
+	record = self._algolia_index.get_object(self.pratilipi_id)
 	return ujson.loads(record)
 
 
