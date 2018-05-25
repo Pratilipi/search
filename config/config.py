@@ -43,3 +43,7 @@ if STAGE in ("devo", "gamma", "prod"):
 elif STAGE == "local":
     REDIS_URL = "localhost"
     REDIS_PORT = 6379
+
+# algolia config
+ALGOLIA_APP_ID = os.environ['ALGOLIA_APP_ID']
+ALGOLIA_API_KEY = os.environ['ALGOLIA_API_KEY']
