@@ -4,6 +4,7 @@ import time
 import boto3
 import solr
 from config import config
+from algoliasearch import algoliasearch
 
 # setting encoding for app
 import sys
@@ -15,6 +16,10 @@ SOLR_URL = config.SOLR_URL
 SQS_QUEUE_URL = config.SQS_QUEUE_URL
 POLL_SLEEP_TIME = config.POLL_SLEEP_TIME
 SQS_QUEUE_REGION = config.SQS_QUEUE_REGION
+ALGOLIA_APP_ID = config.ALGOLIA_APP_ID
+ALGOLIA_API_KEY = config.ALGOLIA_API_KEY 
+
+algolia_client = algoliasearch.Client(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
 
 class Event:
     def __init__(self):
@@ -28,6 +33,7 @@ class Author:
     def __init__(self, kwargs):
         """init"""
         self._conn = solr.SolrConnection('{}/author'.format(SOLR_URL))
+
         for name in kwargs:
             attribute = self.transformer(name)
             if attribute is None: continue
@@ -98,11 +104,21 @@ class Pratilipi:
     def __init__(self, kwargs):
         """init"""
         self._conn = solr.SolrConnection('{}/pratilipi'.format(SOLR_URL))
+	
+	"""algolia connection setup"""
+	algolia_client = algoliasearch.Client(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
+	algolia_client.search_timeout = (1, 5)
+	algolia_client.timeout = (1,30)
+	self._algolia = algolia_client
+
         for name in kwargs:
             attribute = self.transformer(name)
             if attribute is None: continue
             value = kwargs[name]
             setattr(self, attribute, value)
+	
+	if doc.get('langauge') is not None:
+		self._algolia_index = self._algolia("{}_pratilipi".format(doc.get('language'))) 
 
     def __del__(self):
         self._conn.close()
@@ -131,6 +147,17 @@ class Pratilipi:
                        summary=doc.get('summary', None), content_type=doc.get('content_type'),
                        category=doc.get('category', None), category_en=doc.get('category_en', None))
         self._conn.commit()
+
+	"""add pratilipi to algolia"""
+	pratilip = {
+		"objectID":doc['pratilipi_id'],
+		"title":doc.get('title', ""),
+		"titleEn":doc.get('title_en',""),
+		"authorID":doc.get('author_id',"")
+	}
+	pratilipi_json = ujson.dumps(pratilip)
+	self._algolia.add_object(pratilipi_json)
+
         print "------pratilipi added - {}".format(doc['pratilipi_id'])
 
     def delete(self):
@@ -138,6 +165,10 @@ class Pratilipi:
         if self.get() is None: return
         self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
         self._conn.commit()
+
+	"""delete from algolia"""
+	self._algolia.delete_object(self.pratilipi_id)
+
         print "------pratilipi deleted - ", self.pratilipi_id
 
     def get(self):
@@ -161,7 +192,31 @@ class Pratilipi:
         for key in old_doc: setattr(self, key, old_doc[key])
         self.delete()
         self.add()
+
+	"""update algolia object"""
+	old_object = getAlgoliaObject()
+	if old_object is None:
+	    print "------ERROR - can't update pratilipi not found - {}".format(self.pratilipi_id)
+	    return
+
+	if old_object['title'] != new_doc['title'] or old_object['titleEn'] != new_doc['title_en']:
+		new_object = {
+			"objectID":doc['pratilipi_id'],
+			"title":doc.get('title', ""),
+			"titleEn":doc.get('title_en',""),
+			"authorID":doc.get('author_id',"")						
+		}
+		pratilipi_json = ujson.dumps(new_object)
+		self._algolia.partial_update_object(pratilipi_json)	
+		
+	
         print "------pratilipi updated - ", self.pratilipi_id
+
+    def getAlgoliaObject(self):
+	"""get from algolia"""
+	record = self._algolia.get_object(self.pratilipi_id)
+	return ujson.loads(record)
+
 
 class SearchQueue:
     def __init__(self):
