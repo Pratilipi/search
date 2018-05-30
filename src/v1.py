@@ -1,12 +1,16 @@
+# coding=utf-8
+
+# setting encoding for app
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 import requests
 import inspect
 import redis
 import threading
 import simplejson as json
 import pymysql.cursors
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
 from lib.commonfns import log_formatter
 from datetime import datetime
@@ -171,10 +175,7 @@ def trending_search(config_dict, data):
                 if ky is None:
                     continue 
 
-                k1 = _encode_data(sw)
-                k2 = _encode_data(ky)
-                
-                if k1 in k2:
+                if sw in ky:
                     del(trending_keywords[ky])
 
         temp = sorted(trending_keywords, key=trending_keywords.get, reverse=True)
