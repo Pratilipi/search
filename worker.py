@@ -92,7 +92,7 @@ class Author:
 	}
 	
 	author_json = ujson.loads(ujson.dumps(author))
-	self._algolia_index.add_object(author_json)
+	#self._algolia_index.add_object(author_json)
 	print "Author added to algolia"
 
         print "------author added - ", doc['author_id']
@@ -158,7 +158,7 @@ class Author:
 	                "penNameEn":penNameEn
 		}
 		author_json = ujson.loads(ujson.dumps(new_object))
-		self._algolia_index.partial_update_object(author_json)
+		#self._algolia_index.partial_update_object(author_json)
 
         print "------author updated - {}".format(self.author_id)
 
@@ -234,7 +234,7 @@ class Pratilipi:
 	}
 	
 	pratilipi_json = ujson.loads(ujson.dumps(pratilipi))
-	self._algolia_index.add_object(pratilipi_json)
+	#self._algolia_index.add_object(pratilipi_json)
 	print "Pratilipi added to algolia"
 
         print "------pratilipi added - {}".format(doc['pratilipi_id'])
