@@ -294,7 +294,7 @@ class Pratilipi:
 			"authorID":new_doc.get('author_id',"")						
 		}
 		pratilipi_json = ujson.loads(ujson.dumps(new_object))
-		self._algolia_index.partial_update_object(pratilipi_json)	
+		#self._algolia_index.partial_update_object(pratilipi_json)	
 		
         print "------pratilipi updated - ", self.pratilipi_id
 
