@@ -68,11 +68,11 @@ def _encode_data(data_str):
     else:
         return data_str.encode('utf-8')
 
-def _get_trending_search(language):
+def _get_trending_search(config_dict, language):
     r = redis.StrictRedis(config_dict['redis_url'], config_dict['redis_port'], config_dict['redis_db'])
     return r.hget("trending_search", language)
 
-def _set_trending_search(language, data):
+def _set_trending_search(config_dict, language, data):
     r = redis.StrictRedis(config_dict['redis_url'], config_dict['redis_port'], config_dict['redis_db'])
     data = '|'.join([str(i) for i in data])
     r.hset("trending_search", language, data)
@@ -155,7 +155,7 @@ def trending_search(config_dict, data):
     age = config_dict['trending_age']
 
     try:
-        d = _get_trending_search(language)
+        d = _get_trending_search(config_dict, language)
         if d is not None:
             print "got trending from cache"
             response = {'trending_keywords': d.split('|')}
@@ -199,7 +199,7 @@ def trending_search(config_dict, data):
             return [200, "Success"]
 
         d = [_encode_data(i) for i in temp[:int(limit)]]
-        _set_trending_search(language, d)
+        _set_trending_search(config_dict, language, d)
 
         response = {'trending_keywords': temp[:int(limit)]}
 
