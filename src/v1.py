@@ -76,7 +76,7 @@ def _set_trending_search(config_dict, language, data):
     r = redis.StrictRedis(config_dict['redis_url'], config_dict['redis_port'], config_dict['redis_db'])
     data = '|'.join([str(i) for i in data])
     r.hset("trending_search", language, data)
-    r.expire("trending_search", 300)
+    r.expire("trending_search", 900)
 
 def register_search_activity(url, data):
     """
