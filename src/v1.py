@@ -199,7 +199,7 @@ def trending_search(config_dict, data):
             return [200, "Success"]
 
         d = [_encode_data(i) for i in temp[:int(limit)]]
-        _set_trending_search('MARATHI', d)
+        _set_trending_search(language, d)
 
         response = {'trending_keywords': temp[:int(limit)]}
 
