@@ -62,7 +62,7 @@ def _encode_data(data_str):
 
     data_str = data_str.lower()
     try:
-        data_str.encode('utf-8')
+        return data_str.encode('utf-8')
     except UnicodeDecodeError:
         return data_str
     else:
@@ -171,11 +171,12 @@ def trending_search(config_dict, data):
 
         stop_word = _get_stop_words(config_dict)
         for sw in stop_word:
+            k1 = _encode_data(sw)
             for ky in trending_keywords.keys():
                 if ky is None:
                     continue 
-
-                if sw in ky:
+                k2 = _encode_data(ky)
+                if k1 in k2:
                     del(trending_keywords[ky])
 
         temp = sorted(trending_keywords, key=trending_keywords.get, reverse=True)
