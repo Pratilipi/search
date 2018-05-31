@@ -68,6 +68,15 @@ def _encode_data(data_str):
     else:
         return data_str.encode('utf-8')
 
+def _get_trending_search(language):
+    r = redis.StrictRedis(config_dict['redis_url'], config_dict['redis_port'], config_dict['redis_db'])
+    return r.hget("trending_search", language)
+
+def _set_trending_search(language, data):
+    r = redis.StrictRedis(config_dict['redis_url'], config_dict['redis_port'], config_dict['redis_db'])
+    data = '|'.join([str(i) for i in data])
+    r.hset("trending_search", language, data)
+    r.expire("trending_search", 300)
 
 def register_search_activity(url, data):
     """
@@ -146,6 +155,12 @@ def trending_search(config_dict, data):
     age = config_dict['trending_age']
 
     try:
+        d = _get_trending_search(language)
+        if d is not None:
+            print "got trending from cache"
+            response = {'trending_keywords': d.split('|')}
+            return [200, "Success", response]
+
         #fetch search activities
         #prepare url for solr
         param_dict = {'wt':'json',
@@ -182,6 +197,9 @@ def trending_search(config_dict, data):
         temp = sorted(trending_keywords, key=trending_keywords.get, reverse=True)
         if len(temp) == 0:
             return [200, "Success"]
+
+        d = [_encode_data(i) for i in temp[:int(limit)]]
+        _set_trending_search('MARATHI', d)
 
         response = {'trending_keywords': temp[:int(limit)]}
 
