@@ -5,6 +5,7 @@ import boto3
 import solr
 from config import config
 from algoliasearch import algoliasearch
+from lib import serviceapis
 
 # setting encoding for app
 import sys
@@ -220,6 +221,9 @@ class Pratilipi:
 	
 	
 	"""add pratilipi to algolia"""
+	
+	temp_pratilipi = get_pratilipis(config,doc) 
+
 	if doc.get('language') is not None:
                 self._algolia_index = self._algolia.init_index("{}_pratilipi".format(doc.get('language').lower()))
 		print "{}_pratilipi".format(doc.get('language').lower())
@@ -316,7 +320,7 @@ class SearchQueue:
     def poll(self):
         """poll queue"""
         setattr(self, 'events', [])
-        
+       
 	response = self.client.receive_message(QueueUrl=self.url, MaxNumberOfMessages=1,  AttributeNames=[ 'SentTimestamp' ])
         if 'Messages' not in response: return
         for msg in response['Messages']:
