@@ -62,12 +62,21 @@ def _encode_data(data_str):
 
     data_str = data_str.lower()
     try:
-        data_str.encode('utf-8')
+        return data_str.encode('utf-8')
     except UnicodeDecodeError:
         return data_str
     else:
         return data_str.encode('utf-8')
 
+def _get_trending_search(config_dict, language):
+    r = redis.StrictRedis(config_dict['redis_url'], config_dict['redis_port'], config_dict['redis_db'])
+    return r.hget("trending_search", language)
+
+def _set_trending_search(config_dict, language, data):
+    r = redis.StrictRedis(config_dict['redis_url'], config_dict['redis_port'], config_dict['redis_db'])
+    data = '|'.join([str(i) for i in data])
+    r.hset("trending_search", language, data)
+    r.expire("trending_search", 900)
 
 def register_search_activity(url, data):
     """
@@ -146,6 +155,12 @@ def trending_search(config_dict, data):
     age = config_dict['trending_age']
 
     try:
+        d = _get_trending_search(config_dict, language)
+        if d is not None:
+            print "got trending from cache"
+            response = {'trending_keywords': d.split('|')}
+            return [200, "Success", response]
+
         #fetch search activities
         #prepare url for solr
         param_dict = {'wt':'json',
@@ -171,16 +186,20 @@ def trending_search(config_dict, data):
 
         stop_word = _get_stop_words(config_dict)
         for sw in stop_word:
+            k1 = _encode_data(sw)
             for ky in trending_keywords.keys():
                 if ky is None:
                     continue 
-
-                if sw in ky:
+                k2 = _encode_data(ky)
+                if k1 in k2:
                     del(trending_keywords[ky])
 
         temp = sorted(trending_keywords, key=trending_keywords.get, reverse=True)
         if len(temp) == 0:
             return [200, "Success"]
+
+        d = [_encode_data(i) for i in temp[:int(limit)]]
+        _set_trending_search(config_dict, language, d)
 
         response = {'trending_keywords': temp[:int(limit)]}
 
