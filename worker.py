@@ -78,6 +78,8 @@ class Author:
 	print "Author added to solr"
 	
 	"""add author to algolia"""
+	temp_authors = get_authors(config,doc)
+
 	if doc.get('language') is not None:
                 self._algolia_index = self._algolia.init_index("{}_author".format(doc.get('language').lower()))
 		print "{}_author".format(doc.get('language').lower())
@@ -165,6 +167,7 @@ class Author:
 
     def getAlgoliaObject(self):
 	"""get from algolia"""
+	return None
 	try:
 		record = self._algolia_index.get_object(self.author_id)
 		return ujson.loads(ujson.dumps(record))
@@ -222,7 +225,7 @@ class Pratilipi:
 	
 	"""add pratilipi to algolia"""
 	
-	temp_pratilipi = get_pratilipis(config,doc) 
+	temp_pratilipis = get_pratilipis(config,doc) 
 
 	if doc.get('language') is not None:
                 self._algolia_index = self._algolia.init_index("{}_pratilipi".format(doc.get('language').lower()))
