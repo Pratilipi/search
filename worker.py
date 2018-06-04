@@ -78,11 +78,9 @@ class Author:
 	print "Author added to solr"
 	
 	"""add author to algolia"""
-	temp_authors = get_authors(config,doc)
-
 	if doc.get('language') is not None:
-                self._algolia_index = self._algolia.init_index("{}_author".format(doc.get('language').lower()))
-		print "{}_author".format(doc.get('language').lower())
+                self._algolia_index = self._algolia.init_index("prod_{}_author".format(doc.get('language').lower()))
+		print "prod_{}_author".format(doc.get('language').lower())
 
 	if self.getAlgoliaObject() is not None: return
 
@@ -110,7 +108,7 @@ class Author:
 	"""delete from algolia"""
 	#doc = self.__dict__
 	#if doc.get('langauge') is not None:
-        #       algolia_index = self._algolia("{}_author".format(doc.get('language')))
+        #       algolia_index = self._algolia("prod_{}_author".format(doc.get('language')))
 	#	algolia_index.delete_object(self.author_id)
 
         print "------author deleted - ", self.author_id
@@ -125,8 +123,9 @@ class Author:
 	
     def update(self):
         """update doc"""
-	new_doc = self.__dict__
 
+	new_doc = self.__dict__
+	"""
 	old_doc = self.get()
         if old_doc is None:
             print "------ERROR - can't update author not found - {}".format(self.author_id)
@@ -136,17 +135,28 @@ class Author:
         for key in old_doc: setattr(self, key, old_doc[key])
         self.delete()
         self.add()
-	
+	"""
+
 	"""update algolia object"""
+	print "updating the algolia object"
+	print new_doc.get('language')
 	if new_doc.get('language') is not None:
-                self._algolia_index = self._algolia.init_index("{}_author".format(new_doc.get('language').lower()))
-                print "{}_author".format(new_doc.get('language').lower())
+                self._algolia_index = self._algolia.init_index("prod_{}_author".format(new_doc.get('language').lower()))
+                print "prod_{}_author".format(new_doc.get('language').lower())
 	
 	old_doc = self.getAlgoliaObject()
 
 	if old_doc is None:
-	    print "------ERROR - can't update author not found - {}".format(self.author_id)
+	    print "------ERROR - can't update author in algolia not found - {}".format(self.author_id)
 	    return
+
+	pdict = {}
+	pdict['author_id'] = self.author_id
+	authors = serviceapis.get_authors(config,pdict)
+
+	if len(authors) > 0:
+		print "Got author from author service"
+		print authors
 
 	name = new_doc.get("first_name","")+" "+new_doc.get("last_name","")
 	nameEn = new_doc.get("first_name_en","")+" "+new_doc.get("last_name_en","")
@@ -161,13 +171,12 @@ class Author:
 	                "penNameEn":penNameEn
 		}
 		author_json = ujson.loads(ujson.dumps(new_object))
-		#self._algolia_index.partial_update_object(author_json)
+		self._algolia_index.partial_update_object(author_json)
 
         print "------author updated - {}".format(self.author_id)
 
     def getAlgoliaObject(self):
 	"""get from algolia"""
-	return None
 	try:
 		record = self._algolia_index.get_object(self.author_id)
 		return ujson.loads(ujson.dumps(record))
@@ -228,8 +237,8 @@ class Pratilipi:
 	temp_pratilipis = get_pratilipis(config,doc) 
 
 	if doc.get('language') is not None:
-                self._algolia_index = self._algolia.init_index("{}_pratilipi".format(doc.get('language').lower()))
-		print "{}_pratilipi".format(doc.get('language').lower())
+                self._algolia_index = self._algolia.init_index("prod_{}_pratilipi".format(doc.get('language').lower()))
+		print "prod_{}_pratilipi".format(doc.get('language').lower())
 
 	if self.getAlgoliaObject() is not None: return
 
@@ -255,7 +264,7 @@ class Pratilipi:
 	"""delete from algolia"""
 	#doc = self.__dict__
 	#if doc.get('langauge') is not None:
-        #       algolia_index = self._algolia("{}_pratilipi".format(doc.get('language')))
+        #       algolia_index = self._algolia("prod_{}_pratilipi".format(doc.get('language')))
 	#	algolia_index.delete_object(self.pratilipi_id)
 
         print "------pratilipi deleted - ", self.pratilipi_id
@@ -284,8 +293,8 @@ class Pratilipi:
 
 	"""update algolia object"""
 	if new_doc.get('language') is not None:
-                self._algolia_index = self._algolia.init_index("{}_pratilipi".format(new_doc.get('language').lower()))
-                print "{}_pratilipi".format(new_doc.get('language').lower())
+                self._algolia_index = self._algolia.init_index("prod_{}_pratilipi".format(new_doc.get('language').lower()))
+                print "prod_{}_pratilipi".format(new_doc.get('language').lower())
 	
 	old_doc = self.getAlgoliaObject()
 
