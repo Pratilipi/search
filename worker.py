@@ -75,27 +75,6 @@ class Author:
                        first_name_en=doc.get('first_name_en', None), last_name_en=doc.get('last_name_en'),
                        pen_name_en=doc.get('pen_name_en', None), summary=doc.get('summary', None))
         self._conn.commit()
-	print "Author added to solr"
-	
-	"""add author to algolia"""
-	if doc.get('language') is not None:
-                self._algolia_index = self._algolia.init_index("prod_{}_author".format(doc.get('language').lower()))
-		print "prod_{}_author".format(doc.get('language').lower())
-
-	if self.getAlgoliaObject() is not None: return
-
-	author = {
-		"objectID":doc['author_id'],
-		"name":doc.get('first_name', "")+" "+doc.get("last_name",""),
-		"nameEn":doc.get('first_name_en',"")+" "+doc.get("last_name_en",""),
-		"penName":doc.get('pen_name',""),
-		"penNameEn":doc.get('pen_name_en',"")
-	}
-	
-	author_json = ujson.loads(ujson.dumps(author))
-	#self._algolia_index.add_object(author_json)
-	print "Author added to algolia"
-
         print "------author added - ", doc['author_id']
 
     def delete(self):
@@ -104,13 +83,30 @@ class Author:
 
         self._conn.delete_query("author_id:{}".format(self.author_id))
         self._conn.commit()
-	
-	"""delete from algolia"""
-	#doc = self.__dict__
-	#if doc.get('langauge') is not None:
-        #       algolia_index = self._algolia("prod_{}_author".format(doc.get('language')))
-	#	algolia_index.delete_object(self.author_id)
 
+	"""delete from algolia"""
+	print "Author to delete",self.author_id
+	pdict = {}
+        pdict['author_id'] = self.author_id
+        pdict['deleted'] = True
+	pdict['user_id'] = 0
+	authors = serviceapis.get_authors(pdict) 
+	if len(authors) > 0:
+		temp = authors[0]
+		language = temp['language'].lower()
+		algolia_index = self._algolia.init_index("prod_{}_author".format(language))
+		#print "deleted author"
+		algolia_index.delete_object(self.author_id)
+
+		"""delete author related pratilipis"""
+		self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(language))
+		old_ptlps = self.getAlgoliaPratilipisByAuthorId()
+		if len(old_ptlps) > 0:
+			for hit in old_ptlps['hits']:
+				if int(hit['authorId']) == self.author_id:
+					print "pratilipi to delete as author deleted ",self.author_id, hit['objectID']
+					self.algolia_pratilipi_index.delete_object(hit['objectID'])
+	
         print "------author deleted - ", self.author_id
 
     def get(self):
@@ -125,7 +121,6 @@ class Author:
         """update doc"""
 
 	new_doc = self.__dict__
-	"""
 	old_doc = self.get()
         if old_doc is None:
             print "------ERROR - can't update author not found - {}".format(self.author_id)
@@ -135,52 +130,84 @@ class Author:
         for key in old_doc: setattr(self, key, old_doc[key])
         self.delete()
         self.add()
-	"""
+
 
 	"""update algolia object"""
 	print "updating the algolia object"
-	print new_doc.get('language')
 	if new_doc.get('language') is not None:
                 self._algolia_index = self._algolia.init_index("prod_{}_author".format(new_doc.get('language').lower()))
+		self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(new_doc.get('language').lower()))
                 print "prod_{}_author".format(new_doc.get('language').lower())
 	
-	old_doc = self.getAlgoliaObject()
-
-	if old_doc is None:
-	    print "------ERROR - can't update author in algolia not found - {}".format(self.author_id)
-	    return
-
 	pdict = {}
 	pdict['author_id'] = self.author_id
-	authors = serviceapis.get_authors(config,pdict)
-
+	pdict['user_id'] = 0
+	authors = serviceapis.get_authors(pdict)
+	#print ("Got some authors")
 	if len(authors) > 0:
-		print "Got author from author service"
-		print authors
+		old_doc = self.getAlgoliaObject()
+        	if old_doc is None:
+			temp = authors[0]
+			if int(temp['contentPublished']) > 0:
+		                print "create author", temp['authorId']
+				author = {}
+        		        author["objectID"]=temp['authorId'],
+                		author["name"]=temp.get('name',""),
+                        	author["nameEn"]=temp.get('nameEn',""),
+	                        author["penName"]=temp.get('penName',""),
+	        	        author["penNameEn"]=temp.get('penNameEn',"")
+        	        	author["firstName"]=temp.get('firstName',"")
+                	        author["lastName"]=temp.get("lastName","")
+	                	author["firstNameEn"]=temp.get("firstNameEn","")
+        	                author["lastNameEn"]=temp.get("lastNameEn","")
+	                	author["summary"]=temp.get("summary","")
+        	                author["contentPublished"]=temp.get("contentPublished","")
+	        	        author["totalReadCount"]=temp.get("totalReadCount","")
 
-	name = new_doc.get("first_name","")+" "+new_doc.get("last_name","")
-	nameEn = new_doc.get("first_name_en","")+" "+new_doc.get("last_name_en","")
-	penName = new_doc.get("pen_name","")
-	penNameEn = new_doc.get("pen_name_en","")
-	if old_doc['name'] != name or old_doc['nameEn'] != nameEn or old_doc['penName'] != penName or old_doc['penNameEn'] != penNameEn:
-		new_object = {
-			"objectID":new_doc['author_id'],
-	                "name":name,
-        	        "nameEn":nameEn,
-                	"penName":penName,
-	                "penNameEn":penNameEn
-		}
-		author_json = ujson.loads(ujson.dumps(new_object))
-		self._algolia_index.partial_update_object(author_json)
+			        author_json = ujson.loads(ujson.dumps(author))
+        			self._algolia_index.add_object(author_json)
+		        	print "Author added to algolia"
+		
+		else:
+			print "update author", self.author_id
+			#print authors
+			author = authors[0]
+			del author["authorId"]
+			author["objectID"] = self.author_id		
+			author_json = ujson.loads(ujson.dumps(author))
+			self._algolia_index.partial_update_object(author_json)
 
-        print "------author updated - {}".format(self.author_id)
-
+			"""Update pratilipis with author info"""
+			old_ptlps = self.getAlgoliaPratilipisByAuthorId()
+			ptlps = []
+			for hit in old_ptlps['hits']:	
+				if int(hit['authorId']) == self.author_id:
+					ptlp = {}
+					ptlp['objectID'] = hit['objectID']
+					ptlp['authorName']=author["name"]
+					ptlp['authorNameEn']=author["nameEn"]
+					ptlp['authorPenName']=author["penName"]
+					ptlp['authorPenNameEn']=author["penNameEn"]
+					ptlp_json =  ujson.loads(ujson.dumps(ptlp))
+					#print ptlp_json
+					print "pratilipi updated with other info",self.author_id, hit['objectID']
+					self.algolia_pratilipi_index.partial_update_object(ptlp_json)
+    
     def getAlgoliaObject(self):
 	"""get from algolia"""
 	try:
 		record = self._algolia_index.get_object(self.author_id)
 		return ujson.loads(ujson.dumps(record))
 	except Exception as err:
+		return None
+	
+    def getAlgoliaPratilipisByAuthorId(self):
+	"get pratilipis from algolia by author_id"
+	try:
+		records = self.algolia_pratilipi_index.search(self.author_id,{"attributesToRetrieve":"objectID,authorId"})
+		return ujson.loads(ujson.dumps(records))
+	except Exception as err:
+		print err
 		return None
 
 class Pratilipi:
@@ -332,7 +359,7 @@ class SearchQueue:
     def poll(self):
         """poll queue"""
         setattr(self, 'events', [])
-       
+      	 
 	response = self.client.receive_message(QueueUrl=self.url, MaxNumberOfMessages=1,  AttributeNames=[ 'SentTimestamp' ])
         if 'Messages' not in response: return
         for msg in response['Messages']:
@@ -365,11 +392,11 @@ class SearchQueue:
 	}
 	event.rcpthandle = "abcdefghijklmnop..."
 	self.events.append(event)
-	
+		
 	event = Event
-	event.type = "AUTHOR.UPDATE"
+	event.type = "AUTHOR.DELETE"
 	event.version = "v2.0"
-	event.resource_id = 68000000004094871
+	event.resource_id = 6800000000391729
 	event.message = {
                 "firstName":"firstname updated",
 		"lastName":"lastName",
@@ -377,12 +404,12 @@ class SearchQueue:
 		"lastNameEn":"lastname en",
 		"penName":"pen name",
 		"penNameEn":"pen name en",
-                "authorId":"68000000004094871",
+                "authorId":"6800000000391729",
 		"language":"HINDI"
         }
         event.rcpthandle = "abcdefghijklmnop..."
         self.events.append(event)
-	"""	
+	"""
     def process_author(self, action, author_id, kwargs):
         kwargs['authorId'] = author_id
         author = Author(kwargs)
