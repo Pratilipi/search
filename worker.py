@@ -145,13 +145,14 @@ class Author:
 	authors = serviceapis.get_authors(pdict)
 	#print ("Got some authors")
 	if len(authors) > 0:
+		print "The other from service ",authors[0]
 		old_doc = self.getAlgoliaObject()
         	if old_doc is None:
 			temp = authors[0]
 			if int(temp['contentPublished']) > 0:
 		                print "create author", temp['authorId']
 				author = {}
-        		        author["objectID"]=temp['authorId'],
+        		        author["objectID"]=self.author_id,
                 		author["name"]=temp.get('name',""),
                         	author["nameEn"]=temp.get('nameEn',""),
 	                        author["penName"]=temp.get('penName',""),
@@ -165,6 +166,7 @@ class Author:
 	        	        author["totalReadCount"]=temp.get("totalReadCount","")
 
 			        author_json = ujson.loads(ujson.dumps(author))
+				print "The author json to create ",author_json
         			self._algolia_index.add_object(author_json)
 		        	print "Author added to algolia"
 		
@@ -175,6 +177,7 @@ class Author:
 			del author["authorId"]
 			author["objectID"] = self.author_id		
 			author_json = ujson.loads(ujson.dumps(author))
+			print "The author json to update ",author_json
 			self._algolia_index.partial_update_object(author_json)
 
 			"""Update pratilipis with author info"""
@@ -270,10 +273,7 @@ class Pratilipi:
 	if self.getAlgoliaObject() is not None: return
 
 	pratilipi = {
-		"objectID":doc['pratilipi_id'],
-		"title":doc.get('title', ""),
-		"titleEn":doc.get('title_en',""),
-		"authorID":doc.get('author_id',"")
+		
 	}
 	
 	pratilipi_json = ujson.loads(ujson.dumps(pratilipi))
