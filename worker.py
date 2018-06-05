@@ -78,34 +78,36 @@ class Author:
         print "------author added - ", doc['author_id']
 
     def delete(self):
-        """delete doc"""
+	"""delete from algolia"""
+	print "Author to delete",self.author_id
+	if self.getAlgoliaObject() is not None:
+		pdict = {}
+	        pdict['author_id'] = self.author_id
+        	pdict['deleted'] = True
+		pdict['user_id'] = 0
+		authors = serviceapis.get_authors(pdict) 
+		if len(authors) > 0:
+			temp = authors[0]
+			language = temp['language'].lower()
+			algolia_index = self._algolia.init_index("prod_{}_author".format(language))
+			#print "deleted author"
+			algolia_index.delete_object(self.author_id)
+
+			"""delete author related pratilipis"""
+			self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(language))
+			old_ptlps = self.getAlgoliaPratilipisByAuthorId()
+			if len(old_ptlps) > 0:
+				for hit in old_ptlps['hits']:
+					if int(hit['authorId']) == self.author_id:
+						print "pratilipi to delete as author deleted ",self.author_id, hit['objectID']
+						self.algolia_pratilipi_index.delete_object(hit['objectID'])
+
+
+	"""delete doc"""
         if self.get() is None: return
 
         self._conn.delete_query("author_id:{}".format(self.author_id))
         self._conn.commit()
-
-	"""delete from algolia"""
-	print "Author to delete",self.author_id
-	pdict = {}
-        pdict['author_id'] = self.author_id
-        pdict['deleted'] = True
-	pdict['user_id'] = 0
-	authors = serviceapis.get_authors(pdict) 
-	if len(authors) > 0:
-		temp = authors[0]
-		language = temp['language'].lower()
-		algolia_index = self._algolia.init_index("prod_{}_author".format(language))
-		#print "deleted author"
-		algolia_index.delete_object(self.author_id)
-
-		"""delete author related pratilipis"""
-		self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(language))
-		old_ptlps = self.getAlgoliaPratilipisByAuthorId()
-		if len(old_ptlps) > 0:
-			for hit in old_ptlps['hits']:
-				if int(hit['authorId']) == self.author_id:
-					print "pratilipi to delete as author deleted ",self.author_id, hit['objectID']
-					self.algolia_pratilipi_index.delete_object(hit['objectID'])
 	
         print "------author deleted - ", self.author_id
 
@@ -118,10 +120,58 @@ class Author:
         return data
 	
     def update(self):
-        """update doc"""
-
+	"""update doc"""
 	new_doc = self.__dict__
 	old_doc = self.get()
+
+	"""update algolia object"""
+	print "updating the algolia author object"
+	if new_doc.get('language') is not None:
+                self._algolia_index = self._algolia.init_index("prod_{}_author".format(new_doc.get('language').lower()))
+		self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(new_doc.get('language').lower()))
+                print "prod_{}_author".format(new_doc.get('language').lower())
+	
+		pdict = {}
+		pdict['author_id'] = self.author_id
+		pdict['user_id'] = 0
+		authors = serviceapis.get_authors(pdict)
+		#print ("Got some authors")
+		if len(authors) > 0:
+			#print "The other from service ",authors[0]
+			#old_doc = self.getAlgoliaObject()
+	        	#if old_doc is None:
+			author = authors[0]
+			if int(author['contentPublished']) > 0:
+				print "create author", author['authorId']
+				self._algolia_index.partial_update_object({
+					"objectID":author['authorId'],
+	        	                "name":author.get('name',""),
+                        		"nameEn":author.get('nameEn',""),
+                       			"penName":author.get('penName',""),
+	                        	"penNameEn":author.get('penNameEn',""),
+        	                	"firstName":author.get('firstName',""),
+                	        	"lastName":author.get("lastName",""),
+                        		"firstNameEn":author.get("firstNameEn",""),
+                        		"lastNameEn":author.get("lastNameEn",""),
+	                        	"summary":author.get("summary",""),
+	                        	"contentPublished":author["contentPublished"],
+        	                	"totalReadCount":author.get("totalReadCount",0)	
+				},True)
+
+				"""Update pratilipis with author info"""
+				old_ptlps = self.getAlgoliaPratilipisByAuthorId()
+				ptlps = []
+				for hit in old_ptlps['hits']:	
+					if int(hit['authorId']) == self.author_id:
+						print "pratilipi updated with other info",self.author_id, hit['objectID']
+						self.algolia_pratilipi_index.partial_update_object({
+							"objectID":hit['objectID'],
+							"authorName":author.get("name",""),
+							"authorNameEn":author.get("nameEn",""),
+							"authorPenName":author.get("penName"),
+							"authorPenNameEn":author.get("penNameEn")
+						})
+	
         if old_doc is None:
             print "------ERROR - can't update author not found - {}".format(self.author_id)
             return
@@ -129,58 +179,8 @@ class Author:
         for key in new_doc: old_doc[key] = new_doc[key]
         for key in old_doc: setattr(self, key, old_doc[key])
         self.delete()
-        self.add()
+        self.add()    
 
-
-	"""update algolia object"""
-	print "updating the algolia object"
-	if new_doc.get('language') is not None:
-                self._algolia_index = self._algolia.init_index("prod_{}_author".format(new_doc.get('language').lower()))
-		self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(new_doc.get('language').lower()))
-                print "prod_{}_author".format(new_doc.get('language').lower())
-	
-	pdict = {}
-	pdict['author_id'] = self.author_id
-	pdict['user_id'] = 0
-	authors = serviceapis.get_authors(pdict)
-	#print ("Got some authors")
-	if len(authors) > 0:
-		#print "The other from service ",authors[0]
-		#old_doc = self.getAlgoliaObject()
-        	#if old_doc is None:
-		author = authors[0]
-		if int(author['contentPublished']) > 0:
-			print "create author", author['authorId']
-			self._algolia_index.partial_update_object({
-				"objectID":author['authorId'],
-	                        "name":author.get('name',""),
-                        	"nameEn":author.get('nameEn',""),
-                       		"penName":author.get('penName',""),
-                        	"penNameEn":author.get('penNameEn',""),
-                        	"firstName":author.get('firstName',""),
-                        	"lastName":author.get("lastName",""),
-                        	"firstNameEn":author.get("firstNameEn",""),
-                        	"lastNameEn":author.get("lastNameEn",""),
-                        	"summary":author.get("summary",""),
-                        	"contentPublished":author["contentPublished"],
-                        	"totalReadCount":author.get("totalReadCount",0)	
-			},True)
-
-			"""Update pratilipis with author info"""
-			old_ptlps = self.getAlgoliaPratilipisByAuthorId()
-			ptlps = []
-			for hit in old_ptlps['hits']:	
-				if int(hit['authorId']) == self.author_id:
-					print "pratilipi updated with other info",self.author_id, hit['objectID']
-					self.algolia_pratilipi_index.partial_update_object({
-						"objectID":hit['objectID'],
-						"authorName":author.get("name",""),
-						"authorNameEn":author.get("nameEn",""),
-						"authorPenName":author.get("penName"),
-						"authorPenNameEn":author.get("penNameEn")
-
-					})
-    
     def getAlgoliaObject(self):
 	"""get from algolia"""
 	try:
@@ -248,22 +248,25 @@ class Pratilipi:
         print "------pratilipi added - {}".format(doc['pratilipi_id'])
 
     def delete(self):
-        """delete doc"""
+
+	"""delete from algolia"""
+	if self.getAlgoliaObject() is not None:
+		pdict = {}
+        	pdict['pratilipi_id'] = self.pratilipi_id
+	        pdict['deleted'] = True
+        	pdict['user_id'] = 0
+		pratilipis = serviceapis.get_pratilipis_meta(pdict)
+		if len(pratilipis) > 0:
+			temp = pratilipis[0]
+	                language = temp['language'].lower()
+        		algolia_index = self._algolia.init_index("prod_{}_pratilipi".format(language))
+			algolia_index.delete_object(self.pratilipi_id)
+
+
+	"""delete doc"""
         if self.get() is None: return
         self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
         self._conn.commit()
-
-	"""delete from algolia"""
-	pdict = {}
-        pdict['pratilipi_id'] = self.pratilipi_id
-        pdict['deleted'] = True
-        pdict['user_id'] = 0
-	pratilipis = serviceapis.get_pratilipis_meta(pdict)
-	if len(pratilipis) > 0:
-		temp = pratilipis[0]
-                language = temp['language'].lower()
-        	algolia_index = self._algolia("prod_{}_pratilipi".format(language))
-		algolia_index.delete_object(self.pratilipi_id)
 
         print "------pratilipi deleted - ", self.pratilipi_id
 
@@ -277,68 +280,86 @@ class Pratilipi:
         return data
 	
     def update(self):
-        """update doc"""
-	new_doc = self.__dict__
-        old_doc = self.get()
-        if old_doc is None:
-            print "------ERROR - can't update pratilipi not found - {}".format(self.pratilipi_id)
-            return
 	
-	for key in new_doc: old_doc[key] = new_doc[key]
-        for key in old_doc: setattr(self, key, old_doc[key])
-        self.delete()
-        self.add()
-	
-	print "updating the algolia object"
-	if new_doc.get('language') is not None:
-		self._algolia_index = self._algolia.init_index("prod_{}_pratilipi".format(new_doc.get('language').lower()))
-		self._algolia_author_index = self._algolia.init_index("prod_{}_author".format(new_doc.get('language').lower()))
-		print "prod_{}_pratilipi".format(new_doc.get('language').lower())
-
+	print "updating the algolia pratilipi object"
 	pdict = {}
         pdict['pratilipi_id'] = self.pratilipi_id
         pdict['user_id'] = 0
-	pratilipis = serviceapis.get_pratilipis(pdict)
+        pratilipis = serviceapis.get_pratilipis(pdict)	
+	print "got pratilipi for ", self.pratilipi_id, pratilipis
 	if len(pratilipis) > 0:
 		pratilipi = pratilipis[0]
-		if pratilipi['state'] == "PUBLISHED":
-			print "create/update pratilipi"
+		if pratilipi.get('language') is not None:
+			self._algolia_index = self._algolia.init_index("prod_{}_pratilipi".format(pratilipi.get('language').lower()))
+			self._algolia_author_index = self._algolia.init_index("prod_{}_author".format(pratilipi.get('language').lower()))
+			print "prod_{}_pratilipi".format(pratilipi.get('language').lower())
+
+			if pratilipi['state'] == "PUBLISHED":
+				print "create/update pratilipi"
 		
-			category = []
-			categoryEn = []
-			
-			if len(pratilipi.get("tags",[]))>0:
+				category = []
+				categoryEn = []
+				tags = pratilipi.get("tags",[])	
 				for tag in tags:
 					if tag["name"] is not None:
-						category.append(tag.get["name"])
+						category.append(tag["name"])
 					if tag["nameEn"] is not None:
-						categoryEn.append(tag.get["nameEn"])
-			author = {}
-			if pratilipi["authorId"] is not None:
-                        	author = self._algolia_author_index.get_object(pratilipi["authorId"])
+						categoryEn.append(tag["nameEn"])
+				
+				print "The tags are ",category, categoryEn
+				
+				temp_author = pratilipi["author"]
+				author = self.getAlgoliaAuthorObject(temp_author["authorId"])
+				print "updating pratilipi with following data", pratilipi, author
+				if author is not None:
+					self._algolia_index.partial_update_object({
+						"objectID":pratilipi['pratilipiId'],
+						"title":pratilipi.get('title',""),
+						"titleEn":pratilipi.get('titleEn',""),
+						"readCount":pratilipi.get('readCount',0),
+						"summary":pratilipi.get('summary',""),
+						"contentType":pratilipi.get('type',""),
+						"category": ",".join(category),
+						"categoryEn": ",".join(categoryEn),
+						"authorId":author["objectID"],		
+						"authorName":author.get("firstName","")+" "+author.get("lastName",""),
+						"authorNameEn":author.get("firstNameEn","")+" "+author.get("lastNameEn",""),
+						"authorPenName":author.get('penName',""),
+						"authorPenNameEn":author.get('penNameEn',"")
+					},True)
+				else:
+					self._algolia_index.partial_update_object({
+                                                "objectID":pratilipi['pratilipiId'],
+                                                "title":pratilipi.get('title',""),
+                                                "titleEn":pratilipi.get('titleEn',""),
+                                                "readCount":pratilipi.get('readCount',0),
+                                                "summary":pratilipi.get('summary',""),
+                                                "contentType":pratilipi.get('type',""),
+                                                "category": ",".join(category),
+                                                "categoryEn": ",".join(categoryEn),
+                                                "authorId":temp_author["authorId"],      
+                                                "authorName":temp_author.get("name",""),
+                                                "authorNameEn":temp_author.get("fullNameEn",""),
+                                                "authorPenName":"",
+                                                "authorPenNameEn":""
+                                        },True)
+			else:
+				""" Delete if state is other than published """
+				print "Delete if state is not published"
+				self._algolia_index.delete_object(self.pratilipi_id)	
+	
+	
+	"""update doc"""
+        new_doc = self.__dict__
+        old_doc = self.get()
+	if old_doc is None:
+            print "------ERROR - can't update pratilipi not found - {}".format(self.pratilipi_id)
+            return
 
-
-			print "updating pratilipi with following data", pratilipi, author
-			self._algolia_index.partial_update_object({
-				"objectID":pratilipi['pratilipiId'],
-				"title":pratilipi.get('title',""),
-				"titleEn":pratilipi.get('titleEn',""),
-				"readCount":pratilipi.get('readCount',0),
-				"summary":pratilipi.get('summary',""),
-				"contentType":pratilipi.get('type',""),
-				"category": ",".join(category),
-				"categoryEn": ",".join(categoryEn),
-				"authorId":pratilipi.get('authorId',),		
-				"authorName":author.get("firstName","")+" "+author.get("lastName",""),
-				"authorNameEn":author.get("firstNameEn","")+" "+author.get("lastNameEn",""),
-				"authorPenName":author.get('penName',""),
-				"authorPenNameEn":author.get('penNameEn',"")
-			},True)
-		else:
-			""" Delete if state is other than published """
-			print "Delete if state is not published"
-			self.algolia_index.delete_object(self.pratilipi_id)	
-		
+        for key in new_doc: old_doc[key] = new_doc[key]
+        for key in old_doc: setattr(self, key, old_doc[key])
+        self.delete()
+        self.add()
 	
         print "------pratilipi updated - ", self.pratilipi_id
 
@@ -350,6 +371,15 @@ class Pratilipi:
 	except Exception as err:
 		return None
 
+    def getAlgoliaAuthorObject(self,authorId):
+	"get from algolia"
+	try:
+        	author = self._algolia_author_index.get_object(authorId)
+		return author
+	except Exception as err:
+        	print "Error while getting author ", err
+                return None
+		
 
 class SearchQueue:
     def __init__(self):
