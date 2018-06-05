@@ -87,3 +87,24 @@ def get_pratilipis(pdict):
 		print "Error while getting pratilipis"
 
 	return pratilipis	
+
+def get_pratilipis_meta(pdict):
+	"Get pratilipi meta data from pratilipi service"
+	url = "{}/{}".format(config.PRATILIPI_SERVICE_URL,"metadata")
+	print url
+	param_dict = {'id':pdict['pratilipi_id']}
+	if pdict['deleted'] == True:
+                param_dict['includeState'] = "DELETED"	
+	print param_dict
+	pratilipis = []
+
+	#call pratilipi serivce for pratilipi meta data
+	service_response = requests.get(url, params=param_dict, headers={"User-Id":str(pdict['user_id'])})
+        if service_response.status_code == 200:
+                print service_response.text
+                pratilipis = json.loads(service_response.text)
+        else:
+                print "Error while getting pratilipis"
+
+        return pratilipis    
+
