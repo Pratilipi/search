@@ -148,9 +148,10 @@ class Author:
 		#print "The other from service ",authors[0]
 		#old_doc = self.getAlgoliaObject()
         	#if old_doc is None:
-		temp = authors[0]
-		if int(temp['contentPublished']) > 0:
-			print "create author", temp['authorId']
+		author = authors[0]
+		if int(author['contentPublished']) > 0:
+			print "create author", author['authorId']
+			"""
 			author = {}
         		author["objectID"]=self.author_id,
                 	author["name"]=temp.get('name',""),
@@ -165,13 +166,28 @@ class Author:
         	        author["contentPublished"]=temp.get("contentPublished","")
 	        	author["totalReadCount"]=temp.get("totalReadCount","")
 			print "The author to update ", author
-			self._algolia_index.partial_update_object(author,True)
+			"""
+			self._algolia_index.partial_update_object({
+				"objectID":author['authorId'],
+	                        "name":author.get('name',""),
+                        	"nameEn":author.get('nameEn',""),
+                       		"penName":author.get('penName',""),
+                        	"penNameEn":author.get('penNameEn',""),
+                        	"firstName":author.get('firstName',""),
+                        	"lastName":author.get("lastName",""),
+                        	"firstNameEn":author.get("firstNameEn",""),
+                        	"lastNameEn":author.get("lastNameEn",""),
+                        	"summary":author.get("summary",""),
+                        	"contentPublished":author["contentPublished"],
+                        	"totalReadCount":author.get("totalReadCount",0)	
+			},True)
 
 			"""Update pratilipis with author info"""
 			old_ptlps = self.getAlgoliaPratilipisByAuthorId()
 			ptlps = []
 			for hit in old_ptlps['hits']:	
 				if int(hit['authorId']) == self.author_id:
+					"""
 					ptlp = {}
 					ptlp['objectID'] = hit['objectID']
 					ptlp['authorName']=author["name"]
@@ -180,8 +196,16 @@ class Author:
 					ptlp['authorPenNameEn']=author["penNameEn"]
 					#ptlp_json =  ujson.dumps(ptlp)
 					#print ptlp_json
+					"""
 					print "pratilipi updated with other info",self.author_id, hit['objectID']
-					self.algolia_pratilipi_index.partial_update_object(ptlp)
+					self.algolia_pratilipi_index.partial_update_object({
+						"objectID":hit['objectID'],
+						"authorName":author.get("name",""),
+						"authorNameEn":author.get("nameEn",""),
+						"authorPenName":author.get("penName"),
+						"authorPenNameEn":author.get("penNameEn")
+
+					})
     
     def getAlgoliaObject(self):
 	"""get from algolia"""
@@ -247,26 +271,6 @@ class Pratilipi:
                        category=doc.get('category', None), category_en=doc.get('category_en', None))
         self._conn.commit()
 	print "Pratilipi added to solr"
-	
-	
-	"""add pratilipi to algolia"""
-	
-	temp_pratilipis = get_pratilipis(config,doc) 
-
-	if doc.get('language') is not None:
-                self._algolia_index = self._algolia.init_index("prod_{}_pratilipi".format(doc.get('language').lower()))
-		print "prod_{}_pratilipi".format(doc.get('language').lower())
-
-	if self.getAlgoliaObject() is not None: return
-
-	pratilipi = {
-		
-	}
-	
-	pratilipi_json = ujson.loads(ujson.dumps(pratilipi))
-	#self._algolia_index.add_object(pratilipi_json)
-	print "Pratilipi added to algolia"
-
         print "------pratilipi added - {}".format(doc['pratilipi_id'])
 
     def delete(self):
