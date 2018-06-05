@@ -145,40 +145,27 @@ class Author:
 	authors = serviceapis.get_authors(pdict)
 	#print ("Got some authors")
 	if len(authors) > 0:
-		print "The other from service ",authors[0]
-		old_doc = self.getAlgoliaObject()
-        	if old_doc is None:
-			temp = authors[0]
-			if int(temp['contentPublished']) > 0:
-		                print "create author", temp['authorId']
-				author = {}
-        		        author["objectID"]=self.author_id,
-                		author["name"]=temp.get('name',""),
-                        	author["nameEn"]=temp.get('nameEn',""),
-	                        author["penName"]=temp.get('penName',""),
-	        	        author["penNameEn"]=temp.get('penNameEn',"")
-        	        	author["firstName"]=temp.get('firstName',"")
-                	        author["lastName"]=temp.get("lastName","")
-	                	author["firstNameEn"]=temp.get("firstNameEn","")
-        	                author["lastNameEn"]=temp.get("lastNameEn","")
-	                	author["summary"]=temp.get("summary","")
-        	                author["contentPublished"]=temp.get("contentPublished","")
-	        	        author["totalReadCount"]=temp.get("totalReadCount","")
-
-			        author_json = ujson.loads(ujson.dumps(author))
-				print "The author json to create ",author_json
-        			self._algolia_index.add_object(author_json)
-		        	print "Author added to algolia"
-		
-		else:
-			print "update author", self.author_id
-			#print authors
-			author = authors[0]
-			del author["authorId"]
-			author["objectID"] = self.author_id		
-			author_json = ujson.loads(ujson.dumps(author))
-			print "The author json to update ",author_json
-			self._algolia_index.partial_update_object(author_json)
+		#print "The other from service ",authors[0]
+		#old_doc = self.getAlgoliaObject()
+        	#if old_doc is None:
+		temp = authors[0]
+		if int(temp['contentPublished']) > 0:
+			print "create author", temp['authorId']
+			author = {}
+        		author["objectID"]=self.author_id,
+                	author["name"]=temp.get('name',""),
+                        author["nameEn"]=temp.get('nameEn',""),
+	                author["penName"]=temp.get('penName',""),
+	        	author["penNameEn"]=temp.get('penNameEn',"")
+        	        author["firstName"]=temp.get('firstName',"")
+                	author["lastName"]=temp.get("lastName","")
+	                author["firstNameEn"]=temp.get("firstNameEn","")
+        	        author["lastNameEn"]=temp.get("lastNameEn","")
+	                author["summary"]=temp.get("summary","")
+        	        author["contentPublished"]=temp.get("contentPublished","")
+	        	author["totalReadCount"]=temp.get("totalReadCount","")
+			print "The author to update ", author
+			self._algolia_index.partial_update_object(author,True)
 
 			"""Update pratilipis with author info"""
 			old_ptlps = self.getAlgoliaPratilipisByAuthorId()
@@ -191,10 +178,10 @@ class Author:
 					ptlp['authorNameEn']=author["nameEn"]
 					ptlp['authorPenName']=author["penName"]
 					ptlp['authorPenNameEn']=author["penNameEn"]
-					ptlp_json =  ujson.loads(ujson.dumps(ptlp))
+					#ptlp_json =  ujson.dumps(ptlp)
 					#print ptlp_json
 					print "pratilipi updated with other info",self.author_id, hit['objectID']
-					self.algolia_pratilipi_index.partial_update_object(ptlp_json)
+					self.algolia_pratilipi_index.partial_update_object(ptlp)
     
     def getAlgoliaObject(self):
 	"""get from algolia"""
