@@ -2,7 +2,7 @@ import os
 import ujson
 import time
 import boto3
-import solr
+#import solr
 from config import config
 from algoliasearch import algoliasearch
 from lib import serviceapis
@@ -13,7 +13,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 # config
-SOLR_URL = config.SOLR_URL
+#SOLR_URL = config.SOLR_URL
 SQS_QUEUE_URL = config.SQS_QUEUE_URL
 POLL_SLEEP_TIME = config.POLL_SLEEP_TIME
 SQS_QUEUE_REGION = config.SQS_QUEUE_REGION
@@ -33,9 +33,6 @@ class Event:
 class Author:
     def __init__(self, kwargs):
         """init"""
-        """solr connection setup"""
-	self._conn = solr.SolrConnection('{}/author'.format(SOLR_URL))
-
  	"""algolia connection setup"""
 	algolia_client = algoliasearch.Client(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
 	algolia_client.search_timeout = (1, 5)
@@ -47,9 +44,6 @@ class Author:
             if attribute is None: continue
             value = kwargs[name]
             setattr(self, attribute, value)
-
-    def __del__(self):
-        self._conn.close()
 
     def transformer(self, key):
         key = key.lower().strip()
@@ -67,19 +61,10 @@ class Author:
         
     def add(self):
         """add doc"""
-	doc = self.__dict__
-
-        if self.get() is not None: return
-        self._conn.add(author_id=doc['author_id'], language=doc.get('language'), first_name=doc.get('first_name',None),
-                       last_name=doc.get('last_name', None), pen_name=doc.get('pen_name', None),
-                       first_name_en=doc.get('first_name_en', None), last_name_en=doc.get('last_name_en'),
-                       pen_name_en=doc.get('pen_name_en', None), summary=doc.get('summary', None))
-        self._conn.commit()
-        print "------author added - ", doc['author_id']
+    	#Currently not adding, as taking care in update as upsert
 
     def delete(self):
 	"""delete from algolia"""
-	print "Author to delete",self.author_id
 	if self.getAlgoliaObject() is not None:
 		pdict = {}
 	        pdict['author_id'] = self.author_id
@@ -101,31 +86,13 @@ class Author:
 					if int(hit['authorId']) == self.author_id:
 						print "pratilipi to delete as author deleted ",self.author_id, hit['objectID']
 						self.algolia_pratilipi_index.delete_object(hit['objectID'])
-
-
-	"""delete doc"""
-        if self.get() is None: return
-
-        self._conn.delete_query("author_id:{}".format(self.author_id))
-        self._conn.commit()
-	
         print "------author deleted - ", self.author_id
-
-    def get(self):
-        """get doc"""
-        dataset = self._conn.query("author_id:{}".format(self.author_id))
-        data = None
-        for row in dataset:
-            data = row
-        return data
-	
+    
     def update(self):
 	"""update doc"""
 	new_doc = self.__dict__
-	old_doc = self.get()
 
 	"""update algolia object"""
-	print "updating the algolia author object"
 	if new_doc.get('language') is not None:
                 self._algolia_index = self._algolia.init_index("prod_{}_author".format(new_doc.get('language').lower()))
 		self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(new_doc.get('language').lower()))
@@ -135,11 +102,7 @@ class Author:
 		pdict['author_id'] = self.author_id
 		pdict['user_id'] = 0
 		authors = serviceapis.get_authors(pdict)
-		#print ("Got some authors")
 		if len(authors) > 0:
-			#print "The other from service ",authors[0]
-			#old_doc = self.getAlgoliaObject()
-	        	#if old_doc is None:
 			author = authors[0]
 			if int(author['contentPublished']) > 0:
 				print "create author", author['authorId']
@@ -171,17 +134,9 @@ class Author:
 							"authorPenName":author.get("penName"),
 							"authorPenNameEn":author.get("penNameEn")
 						})
-	
-        if old_doc is None:
-            print "------ERROR - can't update author not found - {}".format(self.author_id)
-            return
+	print "------author updated - ", self.author_id
 
-        for key in new_doc: old_doc[key] = new_doc[key]
-        for key in old_doc: setattr(self, key, old_doc[key])
-        self.delete()
-        self.add()    
-
-    def getAlgoliaObject(self):
+    def get(self):
 	"""get from algolia"""
 	try:
 		record = self._algolia_index.get_object(self.author_id)
@@ -201,9 +156,6 @@ class Author:
 class Pratilipi:
     def __init__(self, kwargs):
         """init"""
-        	
-	"""solr connection setup"""
-	self._conn = solr.SolrConnection('{}/pratilipi'.format(SOLR_URL))
 	
 	"""algolia connection setup"""
 	algolia_client = algoliasearch.Client(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
@@ -217,8 +169,6 @@ class Pratilipi:
             value = kwargs[name]
             setattr(self, attribute, value)
 	
-    def __del__(self):
-        self._conn.close()
 
     def transformer(self, key):
         key = key.lower().strip()
@@ -235,17 +185,8 @@ class Pratilipi:
         return attribute[key] if key in attribute else None
 
     def add(self):
-	doc = self.__dict__
         """add doc"""
-	if self.get() is not None: return
-
-        self._conn.add(pratilipi_id=doc['pratilipi_id'], language=doc.get('language', None), author_id=doc.get('author_id',None),
-                       title=doc.get('title', None), title_en=doc.get('title_en', None),
-                       summary=doc.get('summary', None), content_type=doc.get('content_type'),
-                       category=doc.get('category', None), category_en=doc.get('category_en', None))
-        self._conn.commit()
-	print "Pratilipi added to solr"
-        print "------pratilipi added - {}".format(doc['pratilipi_id'])
+	#Currently not adding, as taking care in update as upsert
 
     def delete(self):
 
@@ -261,24 +202,9 @@ class Pratilipi:
 	                language = temp['language'].lower()
         		algolia_index = self._algolia.init_index("prod_{}_pratilipi".format(language))
 			algolia_index.delete_object(self.pratilipi_id)
-
-
-	"""delete doc"""
-        if self.get() is None: return
-        self._conn.delete_query("pratilipi_id:{}".format(self.pratilipi_id))
-        self._conn.commit()
-
+	
         print "------pratilipi deleted - ", self.pratilipi_id
 
-    def get(self):
-        """get doc"""
-	
-        dataset = self._conn.query("pratilipi_id:{}".format(self.pratilipi_id))
-        data = None
-        for row in dataset:
-            data = row
-        return data
-	
     def update(self):
 	
 	print "updating the algolia pratilipi object"
@@ -286,7 +212,7 @@ class Pratilipi:
         pdict['pratilipi_id'] = self.pratilipi_id
         pdict['user_id'] = 0
         pratilipis = serviceapis.get_pratilipis(pdict)	
-	print "got pratilipi for ", self.pratilipi_id, pratilipis
+	print "got pratilipi for ", self.pratilipi_id
 	if len(pratilipis) > 0:
 		pratilipi = pratilipis[0]
 		if pratilipi.get('language') is not None:
@@ -306,11 +232,11 @@ class Pratilipi:
 					if tag["nameEn"] is not None:
 						categoryEn.append(tag["nameEn"])
 				
-				print "The tags are ",category, categoryEn
+				#print "The tags are ",category, categoryEn
 				
 				temp_author = pratilipi["author"]
 				author = self.getAlgoliaAuthorObject(temp_author["authorId"])
-				print "updating pratilipi with following data", pratilipi, author
+				#print "updating pratilipi with following data", pratilipi, author
 				if author is not None:
 					self._algolia_index.partial_update_object({
 						"objectID":pratilipi['pratilipiId'],
@@ -348,22 +274,9 @@ class Pratilipi:
 				print "Delete if state is not published"
 				self._algolia_index.delete_object(self.pratilipi_id)	
 	
-	
-	"""update doc"""
-        new_doc = self.__dict__
-        old_doc = self.get()
-	if old_doc is None:
-            print "------ERROR - can't update pratilipi not found - {}".format(self.pratilipi_id)
-            return
-
-        for key in new_doc: old_doc[key] = new_doc[key]
-        for key in old_doc: setattr(self, key, old_doc[key])
-        self.delete()
-        self.add()
-	
         print "------pratilipi updated - ", self.pratilipi_id
 
-    def getAlgoliaObject(self):
+    def get(self):
 	"""get from algolia"""
 	try:
 		record = self._algolia_index.get_object(self.pratilipi_id)
@@ -372,7 +285,7 @@ class Pratilipi:
 		return None
 
     def getAlgoliaAuthorObject(self,authorId):
-	"get from algolia"
+	"get author from algolia "
 	try:
         	author = self._algolia_author_index.get_object(authorId)
 		return author
