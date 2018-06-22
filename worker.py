@@ -65,7 +65,7 @@ class Author:
 
     def delete(self):
 	"""delete from algolia"""
-	if self.getAlgoliaObject() is not None:
+	if self.get() is not None:
 		pdict = {}
 	        pdict['author_id'] = self.author_id
         	pdict['deleted'] = True
@@ -191,7 +191,7 @@ class Pratilipi:
     def delete(self):
 
 	"""delete from algolia"""
-	if self.getAlgoliaObject() is not None:
+	if self.get() is not None:
 		pdict = {}
         	pdict['pratilipi_id'] = self.pratilipi_id
 	        pdict['deleted'] = True
