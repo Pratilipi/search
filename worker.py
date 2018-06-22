@@ -106,7 +106,7 @@ class Author:
 			author = authors[0]
 			if int(author['contentPublished']) > 0:
 				print "create author", author['authorId']
-				self._algolia_index.partial_update_object({
+				self._algolia_index.partial_update_objects([{
 					"objectID":author['authorId'],
 	        	                "name":author.get('name',""),
                         		"nameEn":author.get('nameEn',""),
@@ -119,7 +119,7 @@ class Author:
 	                        	"summary":author.get("summary",""),
 	                        	"contentPublished":author["contentPublished"],
         	                	"totalReadCount":author.get("totalReadCount",0)	
-				},True)
+				}],True)
 
 				"""Update pratilipis with author info"""
 				old_ptlps = self.getAlgoliaPratilipisByAuthorId()
@@ -238,7 +238,7 @@ class Pratilipi:
 				author = self.getAlgoliaAuthorObject(temp_author["authorId"])
 				#print "updating pratilipi with following data", pratilipi, author
 				if author is not None:
-					self._algolia_index.partial_update_object({
+					self._algolia_index.partial_update_objects([{
 						"objectID":pratilipi['pratilipiId'],
 						"title":pratilipi.get('title',""),
 						"titleEn":pratilipi.get('titleEn',""),
@@ -252,9 +252,9 @@ class Pratilipi:
 						"authorNameEn":author.get("firstNameEn","")+" "+author.get("lastNameEn",""),
 						"authorPenName":author.get('penName',""),
 						"authorPenNameEn":author.get('penNameEn',"")
-					},True)
+					}],True)
 				else:
-					self._algolia_index.partial_update_object({
+					self._algolia_index.partial_update_objects([{
                                                 "objectID":pratilipi['pratilipiId'],
                                                 "title":pratilipi.get('title',""),
                                                 "titleEn":pratilipi.get('titleEn',""),
@@ -268,7 +268,7 @@ class Pratilipi:
                                                 "authorNameEn":temp_author.get("fullNameEn",""),
                                                 "authorPenName":"",
                                                 "authorPenNameEn":""
-                                        },True)
+                                        }],True)
 			else:
 				""" Delete if state is other than published """
 				print "Delete if state is not published"
