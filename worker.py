@@ -91,10 +91,11 @@ class Author:
     def update(self):
 	"""update doc"""
 	new_doc = self.__dict__
-
-	"""update algolia object"""
+    print self
+    print new_doc
+    """update algolia object"""
     pdict = {}
-    pdict['author_id'] = self.author_id
+    pdict['author_id'] = new_doc['authorId']
     pdict['user_id'] = 0
     authors = serviceapis.get_authors(pdict)
 
