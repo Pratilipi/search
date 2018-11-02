@@ -93,20 +93,20 @@ class Author:
 	new_doc = self.__dict__
 
 	"""update algolia object"""
-	if new_doc.get('language') is not None:
-                self._algolia_index = self._algolia.init_index("prod_{}_author".format(new_doc.get('language').lower()))
-		self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(new_doc.get('language').lower()))
-                print "prod_{}_author".format(new_doc.get('language').lower())
-	
-		pdict = {}
-		pdict['author_id'] = self.author_id
-		pdict['user_id'] = 0
-		authors = serviceapis.get_authors(pdict)
-		if len(authors) > 0:
-			author = authors[0]
-			if int(author['contentPublished']) > 0:
-				print "create author", author['authorId']
-				self._algolia_index.partial_update_objects([{
+    pdict = {}
+    pdict['author_id'] = self.author_id
+    pdict['user_id'] = 0
+    authors = serviceapis.get_authors(pdict)
+
+    if len(authors) > 0:
+        author = authors[0]
+        if authors.get('language') is not None:
+            self._algolia_index = self._algolia.init_index("prod_{}_author".format(author.get('language').lower()))
+            self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(author.get('language').lower()))
+            print "prod_{}_author".format(author.get('language').lower())
+            if int(author['contentPublished']) > 0:
+                print "create author", author['authorId']
+                self._algolia_index.partial_update_objects([{
 					"objectID":author['authorId'],
 	        	                "name":author.get('name',""),
                         		"nameEn":author.get('nameEn',""),
@@ -121,13 +121,13 @@ class Author:
         	                	"totalReadCount":author.get("totalReadCount",0)	
 				}],True)
 
-				"""Update pratilipis with author info"""
-				old_ptlps = self.getAlgoliaPratilipisByAuthorId()
-				ptlps = []
-				for hit in old_ptlps['hits']:	
-					if int(hit['authorId']) == self.author_id:
-						print "pratilipi updated with other info",self.author_id, hit['objectID']
-						self.algolia_pratilipi_index.partial_update_object({
+                """Update pratilipis with author info"""
+                old_ptlps = self.getAlgoliaPratilipisByAuthorId()
+                ptlps = []
+                for hit in old_ptlps['hits']:
+                    if int(hit['authorId']) == self.author_id:
+                        print "pratilipi updated with other info",self.author_id, hit['objectID']
+                        self.algolia_pratilipi_index.partial_update_object({
 							"objectID":hit['objectID'],
 							"authorName":author.get("name",""),
 							"authorNameEn":author.get("nameEn",""),
