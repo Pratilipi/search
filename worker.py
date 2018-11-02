@@ -101,7 +101,7 @@ class Author:
 
         if len(authors) > 0:
             author = authors[0]
-            if authors.get('language') is not None:
+            if author.get('language') is not None:
                 self._algolia_index = self._algolia.init_index("prod_{}_author".format(author.get('language').lower()))
                 self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(author.get('language').lower()))
                 print "prod_{}_author".format(author.get('language').lower())
