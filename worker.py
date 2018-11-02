@@ -123,18 +123,22 @@ class Author:
 				    }],True)
 
                     """Update pratilipis with author info"""
+                    """
                     old_ptlps = self.getAlgoliaPratilipisByAuthorId()
                     ptlps = []
+                    print "Total pratilips by author", self.author_id,len(old_ptlps)
                     for hit in old_ptlps['hits']:
                         if int(hit['authorId']) == self.author_id:
-                            print "pratilipi updated with other info",self.author_id, hit['objectID']
-                            self.algolia_pratilipi_index.partial_update_object({
-							    "objectID":hit['objectID'],
-							    "authorName":author.get("name",""),
-							    "authorNameEn":author.get("nameEn",""),
-							    "authorPenName":author.get("penName"),
-							    "authorPenNameEn":author.get("penNameEn")
-						    })
+                            if hit['_highlightResult']['authorName']['value'] is not author.get("name","") or hit['_highlightResult']['authorNameEn']['value'] is not author.get("nameEn",""):
+                                print "pratilipi updated with other info",self.author_id, hit['objectID'], hit
+                                self.algolia_pratilipi_index.partial_update_object({
+							        "objectID":hit['objectID'],
+							        "authorName":author.get("name",""),
+							        "authorNameEn":author.get("nameEn",""),
+							        "authorPenName":author.get("penName"),
+							        "authorPenNameEn":author.get("penNameEn")
+						        })
+                    """
 	    print "------author updated - ", self.author_id
 
     def get(self):
