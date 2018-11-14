@@ -6,6 +6,7 @@ import boto3
 from config import config
 from algoliasearch import algoliasearch
 from lib import serviceapis
+from multiprocessing import Pool
 
 # setting encoding for app
 import sys
@@ -392,8 +393,7 @@ class SearchQueue:
                 self.process_pratilipi(action, event.resource_id, event.message)
             self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
 
-print "worker started listening for events...."
-while True:
+def process_queue():
     try:
         print "poll queue...."
         event_q = SearchQueue()
@@ -404,9 +404,11 @@ while True:
     try:
         if len(event_q.events) > 0:
             event_q.process()
-        print "sleeping now...."
-        time.sleep(POLL_SLEEP_TIME)
     except Exception as err:
         print "ERROR - event processing failed, {}".format(err)
 
 
+print "worker started listening for events...."
+pool = Pool(processes=4)
+while True:
+    pool.apply_async(process_queue)
