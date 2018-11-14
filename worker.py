@@ -407,8 +407,10 @@ def process_queue():
     except Exception as err:
         print "ERROR - event processing failed, {}".format(err)
 
-
-print "worker started listening for events...."
-pool = Pool(processes=4)
 while True:
-    pool.apply_async(process_queue)
+    process_queue()
+
+#print "worker started listening for events...."
+#pool = Pool(processes=4)
+#while True:
+#    pool.apply_async(process_queue)
