@@ -2,6 +2,7 @@ import os
 import ujson
 import time
 import boto3
+import threading
 #import solr
 from config import config
 from algoliasearch import algoliasearch
@@ -327,39 +328,6 @@ class SearchQueue:
             event.rcpthandle = msg['ReceiptHandle']
             self.events.append(event)
 	
-	"""
-	event = Event
-	event.type = "PRATILIPI.ADD"
-	event.version = "v2.0"
-	event.resource_id = 63239529976300602
-	event.message = {
-		"title":"Title",
-		"titleEn":"Title english ADD 2",
-		"language":"HINDI",
-		"pratilipiId":"63239529976300601",
-		"authorId":"6800000000409487",
-		"contentType":"HINDI"
-	}
-	event.rcpthandle = "abcdefghijklmnop..."
-	self.events.append(event)
-		
-	event = Event
-	event.type = "AUTHOR.DELETE"
-	event.version = "v2.0"
-	event.resource_id = 6800000000391729
-	event.message = {
-                "firstName":"firstname updated",
-		"lastName":"lastName",
-		"firstNameEn":"firstname en",
-		"lastNameEn":"lastname en",
-		"penName":"pen name",
-		"penNameEn":"pen name en",
-                "authorId":"6800000000391729",
-		"language":"HINDI"
-        }
-        event.rcpthandle = "abcdefghijklmnop..."
-        self.events.append(event)
-	"""
     def process_author(self, action, author_id, kwargs):
         kwargs['authorId'] = author_id
         author = Author(kwargs)
@@ -393,24 +361,28 @@ class SearchQueue:
                 self.process_pratilipi(action, event.resource_id, event.message)
             self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
 
-def process_queue():
-    try:
-        print "poll queue...."
-        event_q = SearchQueue()
-        event_q.poll()
-    except Exception as err:
-        print "ERROR - sqs polling failed, {}".format(err)
+class process_queue(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
 
-    try:
-        if len(event_q.events) > 0:
-            event_q.process()
-    except Exception as err:
-        print "ERROR - event processing failed, {}".format(err)
+    def run(self):
+        while True:
+            try:
+                print "poll queue...."
+                event_q = SearchQueue()
+                event_q.poll()
+            except Exception as err:
+                print "ERROR - sqs polling failed, {}".format(err)
 
-while True:
-    process_queue()
+            try:
+                if len(event_q.events) > 0:
+                    event_q.process()
+            except Exception as err:
+                print "ERROR - event processing failed, {}".format(err)
 
-#print "worker started listening for events...."
-#pool = Pool(processes=4)
-#while True:
-#    pool.apply_async(process_queue)
+def start():
+    for i in range(3):
+        sqsThread = process_queue()
+        sqsThread.start()
+
+start()
