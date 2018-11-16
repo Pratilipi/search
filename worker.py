@@ -346,7 +346,8 @@ class SearchQueue:
         events = self.events
         for event in events:
             resource, action = event.type.upper().split('.')
-
+            self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
+            """
             if resource not in ("AUTHOR", "PRATILIPI"):
                 self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
                 continue
@@ -354,12 +355,12 @@ class SearchQueue:
             if action not in ("ADD", "DELETE", "UPDATE"):
                 self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
                 continue
-
+            """
             if resource == "AUTHOR":
                 self.process_author(action, event.resource_id, event.message)
             elif resource == "PRATILIPI":
                 self.process_pratilipi(action, event.resource_id, event.message)
-            self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
+            #self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
 
 class process_queue(threading.Thread):
     def __init__(self):
