@@ -382,7 +382,7 @@ class process_queue(threading.Thread):
                 print "ERROR - event processing failed, {}".format(err)
 
 def start():
-    for i in range(3):
+    for i in range(9):
         sqsThread = process_queue()
         sqsThread.start()
 
