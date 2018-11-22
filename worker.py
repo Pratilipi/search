@@ -311,7 +311,7 @@ class SearchQueue:
         """poll queue"""
         setattr(self, 'events', [])
       	 
-	response = self.client.receive_message(QueueUrl=self.url, MaxNumberOfMessages=10,  AttributeNames=[ 'SentTimestamp' ])
+	response = self.client.receive_message(QueueUrl=self.url, MaxNumberOfMessages=5,  AttributeNames=[ 'SentTimestamp' ])
         if 'Messages' not in response: return
         for msg in response['Messages']:
             # TODO validate request as per schema
@@ -382,7 +382,7 @@ class process_queue(threading.Thread):
                 print "ERROR - event processing failed, {}".format(err)
 
 def start():
-    for i in range(9):
+    for i in range(2):
         sqsThread = process_queue()
         sqsThread.start()
 
