@@ -117,6 +117,10 @@ class Author:
         self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(author.get('language').lower()))
 
         if int(author['contentPublished']) <= 0:
+            try:
+                self.algolia_index.delete_object(author['authorId'])
+            except Exception as err:
+                pass
             return
 
         self._algolia_index.partial_update_objects([{
@@ -224,6 +228,7 @@ class Pratilipi:
 
         if pratilipi['state'] != 'PUBLISHED':
             self._algolia_index.delete_object(self.pratilipi_id)
+            return
 
         category = []
         categoryEn = []
