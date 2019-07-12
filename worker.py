@@ -23,7 +23,11 @@ algolia_client = algoliasearch.Client(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
 
 clog = logging.getLogger('algolia-indexer')
 clog.setLevel(logging.INFO)
-
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+clog.addHandler(handler)
 
 class Event:
     def __init__(self):
