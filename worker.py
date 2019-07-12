@@ -7,6 +7,7 @@ from algoliasearch import algoliasearch
 
 from config import config
 from lib import serviceapis
+import logging
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -20,6 +21,10 @@ ALGOLIA_API_KEY = config.ALGOLIA_API_KEY
 
 algolia_client = algoliasearch.Client(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
 
+clog = logging.getLogger('algolia-indexer')
+clog.setLevel(logging.INFO)
+
+
 class Event:
     def __init__(self):
         """init sqs"""
@@ -27,6 +32,7 @@ class Event:
         setattr(self, 'version', None)
         setattr(self, 'resource', None)
         setattr(self, 'resource', None)
+
 
 class Author:
     def __init__(self, kwargs):
@@ -342,16 +348,17 @@ class SearchQueue:
             try:
                 self.process_event(event)
             except Exception as err:
-                print "ERROR - event processing failed, {}".format(err)
+                clog.error("event processing failed, {}".format(err))
 
     def process_event(self, event):
         """process queue"""
-        print "--processing event"
         resource, action = event.type.upper().split('.')
         self.client.delete_message(QueueUrl=self.url, ReceiptHandle=event.rcpthandle)
         if resource == "AUTHOR":
+            clog.info("Processing Author event, {}".format(event.resource_id))
             self.process_author(action, event.resource_id, event.message)
         elif resource == "PRATILIPI":
+            clog.info("Processing Pratilipi event, {}".format(event.resource_id))
             self.process_pratilipi(action, event.resource_id, event.message)
 
 
@@ -361,11 +368,11 @@ while True:
         event_q = SearchQueue()
         event_q.poll()
     except Exception as err:
-        print "ERROR - sqs polling failed, {}".format(err)
+        clog.error("sqs polling failed, {}".format(err))
 
     try:
         if len(event_q.events) > 0:
             event_q.process()
     except Exception as err:
-        print "ERROR - event processing failed, {}".format(err)
+        clog.error("event processing failed, {}".format(err))
 
