@@ -1,21 +1,17 @@
-import os
-import ujson
-import time
-import boto3
-import threading
-#import solr
-from config import config
-from algoliasearch import algoliasearch
-from lib import serviceapis
-from multiprocessing import Pool
-
 # setting encoding for app
 import sys
+
+import boto3
+import ujson
+from algoliasearch import algoliasearch
+
+from config import config
+from lib import serviceapis
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
 # config
-#SOLR_URL = config.SOLR_URL
 SQS_QUEUE_URL = config.SQS_QUEUE_URL
 POLL_SLEEP_TIME = config.POLL_SLEEP_TIME
 SQS_QUEUE_REGION = config.SQS_QUEUE_REGION
@@ -343,22 +339,20 @@ class SearchQueue:
         print "--processing event"
         events = self.events
         for event in events:
-            resource, action = event.type.upper().split('.')
-            self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
-            """
-            if resource not in ("AUTHOR", "PRATILIPI"):
-                self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
-                continue
+            try:
+                self.process_event(event)
+            except Exception as err:
+                print "ERROR - event processing failed, {}".format(err)
 
-            if action not in ("ADD", "DELETE", "UPDATE"):
-                self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
-                continue
-            """
-            if resource == "AUTHOR":
-                self.process_author(action, event.resource_id, event.message)
-            elif resource == "PRATILIPI":
-                self.process_pratilipi(action, event.resource_id, event.message)
-            #self.client.delete_message( QueueUrl=self.url, ReceiptHandle=event.rcpthandle )
+    def process_event(self, event):
+        """process queue"""
+        print "--processing event"
+        resource, action = event.type.upper().split('.')
+        self.client.delete_message(QueueUrl=self.url, ReceiptHandle=event.rcpthandle)
+        if resource == "AUTHOR":
+            self.process_author(action, event.resource_id, event.message)
+        elif resource == "PRATILIPI":
+            self.process_pratilipi(action, event.resource_id, event.message)
 
 
 while True:
