@@ -311,7 +311,7 @@ class SearchQueue:
         """poll queue"""
         setattr(self, 'events', [])
       	 
-	response = self.client.receive_message(QueueUrl=self.url, MaxNumberOfMessages=5,  AttributeNames=[ 'SentTimestamp' ])
+	response = self.client.receive_message(QueueUrl=self.url, MaxNumberOfMessages=5,  AttributeNames=[ 'SentTimestamp' ], VisibilityTimeout=600, WaitTimeSeconds=10)
         if 'Messages' not in response: return
         for msg in response['Messages']:
             # TODO validate request as per schema
@@ -353,13 +353,13 @@ class SearchQueue:
     def process_event(self, event):
         """process queue"""
         resource, action = event.type.upper().split('.')
-        self.client.delete_message(QueueUrl=self.url, ReceiptHandle=event.rcpthandle)
         if resource == "AUTHOR":
             clog.info("Processing Author event, {}".format(event.resource_id))
             self.process_author(action, event.resource_id, event.message)
         elif resource == "PRATILIPI":
             clog.info("Processing Pratilipi event, {}".format(event.resource_id))
             self.process_pratilipi(action, event.resource_id, event.message)
+        self.client.delete_message(QueueUrl=self.url, ReceiptHandle=event.rcpthandle)
 
 
 while True:
