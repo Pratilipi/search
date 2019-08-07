@@ -18,6 +18,8 @@ COPY src/* /search/src/
 COPY lib/* /search/lib/
 COPY config/* /search/config/
 COPY worker.py /search/
+COPY pratilipi.py /search/
+COPY re_indexer.py /search/
 
 #setup nginx for search
 RUN rm /etc/nginx/sites-available/default
