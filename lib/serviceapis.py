@@ -63,14 +63,13 @@ def get_authors_meta(pdict):
         # Call author service for author data
         service_response = requests.get(url, params=param_dict, headers={"User-Id":str(pdict['user_id'])})
         if service_response.status_code == 200:
-                print service_response.text
+        		print service_response.text
                 authors = json.loads(service_response.text)
         else:
                 print "Error while fetching authors"
 
         return authors
 
-	
 def get_pratilipis(pdict):
 
 	url = "{}".format(config.PRATILIPI_SERVICE_URL)
@@ -110,7 +109,7 @@ def get_pratilipis_meta(pdict):
 
 def get_pratilipis_published_after(pdict):
 
-    url = "{}/v2.0/pratilipis".format(config.PRATILIPI_SERVICE_URL)
+    url = config.PRATILIPI_PUBLISHED_QUERYING_URL
     param_dict = dict(published_after=pdict['published_after'], limit=pdict['limit'], offset=pdict['offset'],
                       state=pdict['state'])
 

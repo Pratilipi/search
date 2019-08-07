@@ -19,6 +19,7 @@ POLL_SLEEP_TIME = 1
 
 # 3rd party services
 PRATILIPI_SERVICE_URL = "{}/{}".format(os.environ['API_END_POINT'], "pratilipis")
+PRATILIPI_PUBLISHED_QUERYING_URL = "{}/{}".format(os.environ['API_END_POINT'], "pratilipi/v2.0/pratilipis")
 AUTHOR_SERVICE_URL = "{}/{}".format(os.environ['API_END_POINT'], "authors")
 
 # store analysis
