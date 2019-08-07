@@ -50,28 +50,30 @@ def get_authors(pdict):
 	return authors
 	"""
 
+
 def get_authors_meta(pdict):
-        print "Get authors meta from author service"
-        url = "{}/{}".format(config.AUTHOR_SERVICE_URL,"meta_data")
-        print url
-        param_dict = {'id':pdict['author_id']}
+	print "Get authors meta from author service"
+	url = "{}/{}".format(config.AUTHOR_SERVICE_URL,"meta_data")
+	print url
+	param_dict = {'id': pdict['author_id']}
 	if pdict['deleted'] == True:
 		param_dict['includeState'] = "DELETED"
-        print param_dict
-        authors = []
+		print param_dict
 
-        # Call author service for author data
-        service_response = requests.get(url, params=param_dict, headers={"User-Id":str(pdict['user_id'])})
-        if service_response.status_code == 200:
-        		print service_response.text
-                authors = json.loads(service_response.text)
-        else:
-                print "Error while fetching authors"
+	authors = []
 
-        return authors
+	# Call author service for author data
+	service_response = requests.get(url, params=param_dict, headers={"User-Id": str(pdict['user_id'])})
+	if service_response.status_code == 200:
+		print service_response.text
+		authors = json.loads(service_response.text)
+	else:
+		print "Error while fetching authors"
+
+	return authors
+
 
 def get_pratilipis(pdict):
-
 	url = "{}".format(config.PRATILIPI_SERVICE_URL)
 	param_dict = {'id':pdict['pratilipi_id']}
 
