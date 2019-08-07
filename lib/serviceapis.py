@@ -108,3 +108,21 @@ def get_pratilipis_meta(pdict):
 
         return pratilipis    
 
+def get_pratilipis_published_after(pdict):
+
+    url = "{}/v2.0/pratilipis".format(config.PRATILIPI_SERVICE_URL)
+    param_dict = dict(published_after=pdict['published_after'], limit=pdict['limit'], offset=pdict['offset'],
+                      state=pdict['state'])
+
+    pratilipis = []
+
+    # Call pratilipi service for pratilipi data
+    service_response = requests.get(url, params=param_dict, headers={"User-Id": str(pdict['user_id'])})
+    if service_response.status_code == 200:
+    		print service_response.text
+        	pratilipis = json.loads(service_response.text)
+    else:
+        	print "Error while getting pratilipis"
+
+    return pratilipis
+

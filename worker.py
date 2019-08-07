@@ -29,6 +29,7 @@ formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 clog.addHandler(handler)
 
+
 class Event:
     def __init__(self):
         """init sqs"""
@@ -290,7 +291,8 @@ class Pratilipi:
     def get(self):
          """get from algolia"""
          try:
-             record = self._algolia_index.get_object(self.pratilipi_id)
+             algolia_index = self._algolia.init_index("prod_{}_pratilipi".format(self.language))
+             record = algolia_index.get_object(self.pratilipi_id)
              return ujson.loads(ujson.dumps(record))
          except Exception as err:
              return None
