@@ -1,5 +1,5 @@
-import algoliasearch
 import ujson
+from algoliasearch import algoliasearch
 
 from config import config
 from lib import serviceapis

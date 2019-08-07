@@ -42,6 +42,7 @@ class ReIndexer:
                 pratilipis = serviceapis.get_pratilipis_published_after(pdict)
                 if len(pratilipis) <= 0:
                     checkpoint.force_save()
+                    return
                 for pratilipi in pratilipis['data']:
                     self.check_and_index(pratilipi)
                     checkpoint.save(pratilipi['published_at'])
@@ -50,7 +51,6 @@ class ReIndexer:
             except Exception as err:
                 clog.error("Re-indexing failed, {}".format(err))
             time.sleep(5)
-        self.print_indexing_stats()
 
     def check_and_index(self, pratilipi):
         kwargs = {'pratilipiId': pratilipi['pratilipiId'], 'language': pratilipi['language']}
@@ -73,7 +73,7 @@ class IndexCheckpoint:
         self.previous_indexed_time = 0
 
     def get(self):
-        last_indexed_time = int(self.redis_client.hget("last_indexed_time1", "last_indexed_time1"))
+        last_indexed_time = int(self.redis_client.hget("last_indexed_time", "last_indexed_time"))
         self.previous_indexed_time = last_indexed_time
         return last_indexed_time
 
@@ -89,3 +89,5 @@ class IndexCheckpoint:
 
 re_indexer = ReIndexer()
 re_indexer.resume_indexing()
+re_indexer.print_indexing_stats()
+

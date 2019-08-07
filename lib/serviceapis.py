@@ -122,7 +122,7 @@ def get_pratilipis_published_after(pdict):
     		print service_response.text
         	pratilipis = json.loads(service_response.text)
     else:
-        	print "Error while getting pratilipis"
+        	print "Error while getting pratilipis. Status Code : {}".format(service_response.status_code)
 
     return pratilipis
 
