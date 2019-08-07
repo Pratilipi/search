@@ -6,7 +6,7 @@ import redis
 
 from config import config
 from lib import serviceapis
-from worker import Pratilipi
+from pratilipi import Pratilipi
 
 redis_config = {'redis_url': config.REDIS_URL,
                'redis_port': config.REDIS_PORT,
@@ -20,6 +20,7 @@ formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 clog.addHandler(handler)
 
+
 class ReIndexer:
 
     def __init__(self):
@@ -29,6 +30,9 @@ class ReIndexer:
     def resume_indexing(self):
         checkpoint = IndexCheckpoint()
         last_indexed_time = checkpoint.get()
+        if last_indexed_time is None:
+            clog.error("Re-indexing failed. No last indexed time present in redis for resuming")
+            return
         limit = 20
         offset = 0
         state = 'PUBLISHED'
@@ -83,5 +87,5 @@ class IndexCheckpoint:
         self.redis_client.hset("last_indexed_time", "last_indexed_time", self.previous_indexed_time)
 
 
-ic = IndexCheckpoint()
-print ic.get()
+re_indexer = ReIndexer()
+re_indexer.resume_indexing()
