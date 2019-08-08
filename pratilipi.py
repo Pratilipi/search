@@ -137,7 +137,7 @@ class Pratilipi:
     def get(self):
         """get from algolia"""
         try:
-            algolia_index = self._algolia.init_index(config.ALGOLIA_PRATILIPI_INDEX_TEMPLATE.format(self.language))
+            algolia_index = self._algolia.init_index(config.ALGOLIA_PRATILIPI_INDEX_TEMPLATE.format(self.language.lower()))
             record = algolia_index.get_object(self.pratilipi_id)
             return ujson.loads(ujson.dumps(record))
         except Exception as err:
