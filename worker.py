@@ -90,11 +90,11 @@ class Author:
 
 	temp = authors[0]
 	language = temp['language'].lower()
-	algolia_index = self._algolia.init_index("prod_{}_author".format(language))
+	algolia_index = self._algolia.init_index(config.ALGOLIA_AUTHOR_INDEX_TEMPLATE.format(language))
 	algolia_index.delete_object(self.author_id)
 
 	"""delete author related pratilipis"""
-	self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(language))
+	self.algolia_pratilipi_index = self._algolia.init_index(config.ALGOLIA_PRATILIPI_INDEX_TEMPLATE.format(language))
 	old_ptlps = self.getAlgoliaPratilipisByAuthorId()
 	if len(old_ptlps) <= 0:
             return
@@ -122,8 +122,8 @@ class Author:
         if author.get('language', None) is None:
             return
 
-        self._algolia_index = self._algolia.init_index("prod_{}_author".format(author.get('language').lower()))
-        self.algolia_pratilipi_index = self._algolia.init_index("prod_{}_pratilipi".format(author.get('language').lower()))
+        self._algolia_index = self._algolia.init_index(config.ALGOLIA_AUTHOR_INDEX_TEMPLATE.format(author.get('language').lower()))
+        self.algolia_pratilipi_index = self._algolia.init_index(config.ALGOLIA_PRATILIPI_INDEX_TEMPLATE.format(author.get('language').lower()))
 
         if int(author['contentPublished']) <= 0:
             try:

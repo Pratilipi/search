@@ -58,7 +58,7 @@ class Pratilipi:
 
         temp = pratilipis[0]
         language = temp['language'].lower()
-        algolia_index = self._algolia.init_index("prod_{}_pratilipi".format(language))
+        algolia_index = self._algolia.init_index(config.ALGOLIA_PRATILIPI_INDEX_TEMPLATE.format(language))
         algolia_index.delete_object(self.pratilipi_id)
         print "------pratilipi deleted - ", self.pratilipi_id
 
@@ -75,9 +75,9 @@ class Pratilipi:
         if pratilipi.get('language', None) is None:
             return
 
-        self._algolia_index = self._algolia.init_index('prod_{}_pratilipi'.format(pratilipi.get('language').lower()))
+        self._algolia_index = self._algolia.init_index(config.ALGOLIA_PRATILIPI_INDEX_TEMPLATE.format(pratilipi.get('language').lower()))
         self._algolia_author_index = self._algolia.init_index(
-            'prod_{}_author'.format(pratilipi.get('language').lower()))
+            config.ALGOLIA_AUTHOR_INDEX_TEMPLATE.format(pratilipi.get('language').lower()))
 
         if pratilipi['state'] != 'PUBLISHED':
             self._algolia_index.delete_object(self.pratilipi_id)
@@ -137,7 +137,7 @@ class Pratilipi:
     def get(self):
         """get from algolia"""
         try:
-            algolia_index = self._algolia.init_index("prod_{}_pratilipi".format(self.language))
+            algolia_index = self._algolia.init_index(config.ALGOLIA_PRATILIPI_INDEX_TEMPLATE.format(self.language))
             record = algolia_index.get_object(self.pratilipi_id)
             return ujson.loads(ujson.dumps(record))
         except Exception as err:

@@ -45,6 +45,13 @@ elif STAGE == "local":
     REDIS_URL = "localhost"
     REDIS_PORT = 6379
 
+if STAGE in ("gamma", "prod"):
+    ALGOLIA_PRATILIPI_INDEX_TEMPLATE = "prod_{}_pratilipi"
+    ALGOLIA_AUTHOR_INDEX_TEMPLATE = "prod_{}_author"
+else:
+    ALGOLIA_PRATILIPI_INDEX_TEMPLATE = "devo_{}_pratilipi"
+    ALGOLIA_AUTHOR_INDEX_TEMPLATE = "devo_{}_author"
+
 # algolia config
 ALGOLIA_APP_ID = os.environ['ALGOLIA_APP_ID']
 ALGOLIA_API_KEY = os.environ['ALGOLIA_API_KEY']
