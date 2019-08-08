@@ -45,7 +45,7 @@ class ReIndexer:
                     return
                 for pratilipi in pratilipis['data']:
                     self.check_and_index(pratilipi)
-                    checkpoint.save(pratilipi['published_at'])
+                    checkpoint.save(pratilipi['publishedAt'])
                 offset = offset + len(pratilipis)
                 self.updated_pratilipis_count = offset
             except Exception as err:
