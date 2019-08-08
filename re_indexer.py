@@ -62,7 +62,7 @@ class ReIndexer:
         pratilipi.update()
 
     def print_indexing_stats(self):
-        print "Indexing stats : Total Pratilipis Updated : {}, Re-indexed Pratilipis : {}".format(self.updated_pratilipis_count, self.re_indexed_pratilipis_count)
+        clog.info("Indexing stats : Total Pratilipis Updated : {}, Re-indexed Pratilipis : {}".format(self.updated_pratilipis_count, self.re_indexed_pratilipis_count))
 
 
 class IndexCheckpoint:
