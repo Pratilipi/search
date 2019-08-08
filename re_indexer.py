@@ -73,7 +73,7 @@ class IndexCheckpoint:
         self.previous_indexed_time = 0
 
     def get(self):
-        last_indexed_time = int(self.redis_client.hget("last_indexed_time", "last_indexed_time"))
+        last_indexed_time = int(self.redis_client.get("last_indexed_time"))
         self.previous_indexed_time = last_indexed_time
         return last_indexed_time
 
@@ -84,7 +84,7 @@ class IndexCheckpoint:
         self.force_save()
 
     def force_save(self):
-        self.redis_client.hset("last_indexed_time", "last_indexed_time", self.previous_indexed_time)
+        self.redis_client.set("last_indexed_time", self.previous_indexed_time)
 
 
 re_indexer = ReIndexer()
