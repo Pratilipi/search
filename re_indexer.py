@@ -48,6 +48,7 @@ class ReIndexer:
                     return
                 for pratilipi in pratilipis['data']:
                     published_at = pratilipi['publishedAt']
+                    clog.info("Processing Pratilipi : {}, Published at : {}".format(pratilipi['pratilipiId'], published_at))
                     current_epoc_millis = int(round(time.time() * 1000))
                     if published_at > (current_epoc_millis + 600000):
                         checkpoint.force_save()
