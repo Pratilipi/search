@@ -8,6 +8,9 @@ from config import config
 from lib import serviceapis
 from pratilipi import Pratilipi
 
+import requests.packages.urllib3
+requests.packages.urllib3.disable_warnings()
+
 redis_config = {'redis_url': config.REDIS_URL,
                'redis_port': config.REDIS_PORT,
                'redis_db': config.REDIS_DB, }
@@ -40,14 +43,19 @@ class ReIndexer:
             try:
                 pdict = dict(published_after=last_indexed_time, limit=limit, offset=offset, state=state, user_id=0)
                 pratilipis = serviceapis.get_pratilipis_published_after(pdict)
-                if len(pratilipis) <= 0:
+                if len(pratilipis) <= 0 or len(pratilipis['data']) <= 0:
                     checkpoint.force_save()
                     return
                 for pratilipi in pratilipis['data']:
+                    published_at = pratilipi['publishedAt']
+                    current_epoc_millis = int(round(time.time() * 1000))
+                    if published_at > (current_epoc_millis + 600000):
+                        checkpoint.force_save()
+                        return
+                    self.updated_pratilipis_count = self.updated_pratilipis_count + 1
                     self.check_and_index(pratilipi)
-                    checkpoint.save(pratilipi['publishedAt'])
+                    checkpoint.save(published_at)
                 offset = offset + len(pratilipis['data'])
-                self.updated_pratilipis_count = offset
             except Exception as err:
                 clog.error("Re-indexing failed, {}".format(err))
             time.sleep(5)
@@ -90,4 +98,5 @@ class IndexCheckpoint:
 re_indexer = ReIndexer()
 re_indexer.resume_indexing()
 re_indexer.print_indexing_stats()
+handler.flush()
 
