@@ -47,6 +47,9 @@ class ReIndexer:
                     checkpoint.force_save()
                     return
                 for pratilipi in pratilipis['data']:
+                    content_type = pratilipi['contentType']
+                    if content_type == 'AUDIO':
+                        continue
                     published_at = pratilipi['publishedAt']
                     clog.info("Processing Pratilipi : {}, Published at : {}".format(pratilipi['pratilipiId'], published_at))
                     current_epoc_millis = int(round(time.time() * 1000))
